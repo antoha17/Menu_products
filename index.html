@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=3e96f6c0">
+<link rel="manifest" href="manifest.webmanifest?v=2010575c">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -197,7 +197,10 @@ button.qty{cursor:pointer}
 .item.armed::after{background:var(--accent);color:var(--accent-ink)}
 .item.home .nm{color:var(--muted)}
 .homeline{margin:10px 0 0;font-size:13px;color:var(--muted)}
-.homecard{margin-top:22px;padding:12px;border-radius:calc(var(--r) + 6px);background:var(--accent-soft);border:1.5px solid var(--accent)}
+.homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:1.5px solid var(--accent);border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
+.homecount svg{width:18px;height:18px;flex:none}
+.homecount span{margin-left:auto;font-weight:500;font-size:13px}
+.homecard{scroll-margin-top:90px;margin-top:22px;padding:12px;border-radius:calc(var(--r) + 6px);background:var(--accent-soft);border:1.5px solid var(--accent)}
 .homecard .hh{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;color:var(--accent);margin:2px 4px 10px}
 .homecard .hh svg{width:20px;height:20px}
 .enut{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;margin-top:2px}
@@ -206,6 +209,9 @@ button.qty{cursor:pointer}
 .enut input{width:100%;box-sizing:border-box;padding:8px 10px}
 .enut small{font-size:11px;color:var(--muted);text-align:center}
 .enut .gp{flex:1 1 100px}
+.enut .et.own{color:var(--muted)}
+.enut .ek{flex:1 1 100%;font-size:13px;color:var(--accent);font-weight:600}
+.enut .ek:empty{display:none}
 .tint{width:100%;accent-color:var(--accent);margin:6px 0 0}
 .tintl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 .rinline{padding:4px 16px 18px;border-top:1px solid var(--line);background:var(--open-fill,var(--accent-soft))}
@@ -939,10 +945,12 @@ function vRecipe(r){
   </div>`;
 }
 /* products missing from the built-in table get a small "per 100 g" line; what is typed there is remembered for next time */
-function nutKnown(i){return !!lookup(i.name||"")?.per100}
+function nutKnown(i){return !i.per100&&!!lookup(i.name||"")?.per100}
+function nutLine(i){const g=ingGrams(i,1);const k=i.per100?.kcal;return g&&k?`В ${trim(g,0)} г ≈ ${trim(k*g/100,0)} ккал`:""}
 function nutRow(i,ix){const pc=PIECES.includes(i.unit)&&!gppOf(i);const v=k=>i.per100&&i.per100[k]!=null?trim(i.per100[k],1):"";
-  return `<div class="enut" id="ei-x-${ix}"${!(i.name||"").trim()||(nutKnown(i)&&!pc)?" hidden":""}><span class="et">${nutKnown(i)?"":"Нет в справочнике. На 100 г:"}</span>
+  return `<div class="enut" id="ei-x-${ix}"${!(i.name||"").trim()||(nutKnown(i)&&!pc)?" hidden":""}><span class="et${i.per100?" own":""}">${nutKnown(i)?"":i.per100?"Ваши данные на 100 г, как на упаковке:":"Нет в справочнике. Впишите с упаковки, на 100 г:"}</span>
    ${nutKnown(i)?"":[["kcal","ккал"],["p","белки"],["f","жиры"],["c","углев."]].map(([k,l])=>`<label><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="${k}" value="${v(k)}" placeholder="0"><small>${l}</small></label>`).join("")}
+   <span class="ek" id="ei-k-${ix}">${nutLine(i)}</span>
    ${pc?`<label class="gp"><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="gpp" value="${i.gpp||""}" placeholder="0"><small>г в 1 ${esc(i.unit)}</small></label>`:""}</div>`}
 function vEditor(){
   const e=UI.editor;
@@ -987,7 +995,7 @@ function vShop(){
   return `<div class="sechead"><h1>Покупки</h1><p class="sub">${n?`По меню · ${n} ${dishWord(n)}`:"Свои товары"}</p></div>
   <div class="card">${buy.length&&done===buy.length?`<div class="prog alldone"><b>Всё куплено ✓</b><button class="btn sm" data-a="resetChecks">Снять отметки</button></div>`
    :`<div class="prog"><div class="prog-t"><b>Осталось купить ${buy.length-done}</b><span>из ${buy.length}</span></div><div class="bar" role="progressbar" aria-label="Куплено" aria-valuemin="0" aria-valuemax="${buy.length}" aria-valuenow="${done}"><i style="width:${buy.length?Math.round(done/buy.length*100):0}%"></i></div></div>`}
-   <p class="homeline">Если продукт уже есть дома, смахните его влево${home.length?` · есть дома: ${home.length}, список внизу`:""}</p></div>
+   <p class="homeline">Если продукт уже есть дома, смахните его влево</p>${home.length?`<button class="homecount" data-a="toHomeList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Есть дома: ${home.length} ${home.length%10===1&&home.length%100!==11?"продукт":[2,3,4].includes(home.length%10)&&![12,13,14].includes(home.length%100)?"продукта":"продуктов"}<span>показать ↓</span></button>`:""}</div>
   <div class="actions" style="margin:12px 0 0"><button class="btn sm" data-a="shareShop"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться списком</button><button class="btn sm danger" data-a="clearList">Очистить список</button>${done&&done<buy.length?`<button class="btn sm ghost" data-a="resetChecks">Снять отметки</button>`:""}<span class="copied" id="copiedS"></span></div>
   ${CATS.filter(c=>byCat(c).length).map(c=>`<div class="gtitle">${c}</div><div class="group">${byCat(c).map(item).join("")}</div>`).join("")}
   ${homeCard(home)}
@@ -1433,6 +1441,7 @@ document.body.addEventListener("click",e=>{
     case "addToPlan":{const r=rById(b.dataset.id);const sl=UI.slots||[];if(!r||!sl.length)return;const sv=1;materialize();
       sl.forEach(k=>(W[k]=W[k]||[]).push({id:uid(),rid:r.id,servings:sv}));r.used=Date.now();saveRecipe(r);UI.addServ=null;UI.slots=[];savePlan();render();
       const m=document.getElementById("addedMsg");if(m){m.textContent="Добавлено в меню: "+sl.length+" ✓";setTimeout(()=>{if(m.isConnected)m.textContent=""},2500)}break}
+    case "toHomeList":document.querySelector(".homecard")?.scrollIntoView({behavior:"smooth",block:"start"});break;
     case "toHome":setHome(b.dataset.key,true);break;
     case "unHome":setHome(b.dataset.key,false);break;
     case "slotsOpen":UI.sheet={t:"slots"};render();break;
@@ -1462,7 +1471,7 @@ document.body.addEventListener("click",e=>{
       const ix=S.recipes.findIndex(x=>x.id===r.id);if(ix>=0)S.recipes[ix]=r;else S.recipes.push(r);
       for(const i of r.ingredients){const L=lookup(i.name);const d={};
         if(i.cat&&i.cat!=="Другое"&&(!L||L.cat!==i.cat))d.cat=i.cat;
-        if(!L){if(i.per100)d.per100=i.per100;if(i.pack)d.pack=i.pack;if(i.gpp)d.gpp=i.gpp}
+        if(i.per100&&!L?.per100)d.per100=i.per100;if(i.gpp&&!L?.gpp)d.gpp=i.gpp;if(!L&&i.pack)d.pack=i.pack;
         if(Object.keys(d).length)learn(i.name,d)}
       saveRecipe(r);if(ed.isNew){UI.impText="";UI.impUrl=""}UI.editor=null;UI.adding=false;UI.sel=null;UI.scale=null;render();scrollTo({top:0});break}
     case "home":{materialize();const k=b.dataset.key;const it=shoppingList().find(i=>i.key===k);const want=b.dataset.h!=="1";
@@ -1551,8 +1560,8 @@ document.body.addEventListener("input",e=>{
   if(t.dataset.ai&&t.dataset.ai!=="preset"){UI.aiDraft[t.dataset.ai]=t.value}
   else if(t.id==="edServ"&&UI.editor.guess){UI.editor.servings=t.value;delete UI.editor.guess;t.classList.remove("warnf");document.getElementById("servHint")?.remove()}
   else if(t.dataset.ed){UI.editor[t.dataset.ed]=t.value;if(t.dataset.ed==="name"&&!UI.editor.dishSet){const sel=document.getElementById("edDish");if(sel&&!UI.editor.dishNew)sel.value=guessDish(t.value)}}
-  else if(t.dataset.pi!=null){const i=UI.editor.ingredients[+t.dataset.pi];const k=t.dataset.pk;if(k==="gpp"){if(+t.value>0)i.gpp=+t.value;else delete i.gpp}else{i.per100=i.per100||{kcal:0,p:0,f:0,c:0};i.per100[k]=+t.value||0}}
-  else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;const x=document.getElementById("ei-x-"+t.dataset.ei);if(x&&!PIECES.includes(i.unit))x.hidden=!t.value.trim()||nutKnown(i);x?.querySelectorAll("[data-pk]").forEach(n=>{if(n.dataset.pk!=="gpp")n.value=""})}}
+  else if(t.dataset.pi!=null){const i=UI.editor.ingredients[+t.dataset.pi];const k=t.dataset.pk;if(k==="gpp"){if(+t.value>0)i.gpp=+t.value;else delete i.gpp}else{i.per100=i.per100||{kcal:0,p:0,f:0,c:0};i.per100[k]=+t.value||0}const el=document.getElementById("ei-k-"+t.dataset.pi);if(el)el.textContent=nutLine(i)}
+  else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="qty"){const el=document.getElementById("ei-k-"+t.dataset.ei);if(el)el.textContent=nutLine(i)}if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;const x=document.getElementById("ei-x-"+t.dataset.ei);if(x&&!PIECES.includes(i.unit))x.hidden=!t.value.trim()||nutKnown(i);x?.querySelectorAll("[data-pk]").forEach(n=>{if(n.dataset.pk!=="gpp")n.value=""})}}
   else if(t.id==="impText")UI.impText=t.value;else if(t.id==="moWish")UI.menuOpts.wish=t.value;
 });
 document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exName")app.querySelector('[data-a="addExtra"]').click()});
