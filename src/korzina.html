@@ -162,6 +162,15 @@ button.qty{cursor:pointer}
 .ritem+.ritem::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line)}
 .ritem[aria-current="true"]{background:var(--accent-soft)}
 .ritem .t{font-weight:500;overflow-wrap:break-word}
+.pickrow{grid-template-columns:auto minmax(0,1fr) auto}
+.pickrow input{width:22px;height:22px;margin:0;accent-color:var(--accent)}
+#pickQ{width:100%;box-sizing:border-box}
+.picklist{margin:12px 0 10px;max-height:50vh;overflow:auto}
+.pk{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:16px;text-align:left;cursor:pointer}
+.pk+.pk{border-top:1px solid var(--line)}
+.pk .m{color:var(--muted);font-size:13px;white-space:nowrap}
+.pk:disabled{opacity:.45}
+button.add-dish{text-align:left;cursor:pointer}
 .ritem svg{width:14px;height:14px;color:var(--muted)}
 .rmeta{display:flex;flex-direction:column;align-items:flex-end;text-align:right;font-size:13px;color:var(--muted);white-space:nowrap}
 .rmeta span:first-child{color:var(--ink);font-weight:500}
@@ -279,7 +288,7 @@ button.qty{cursor:pointer}
   <div id="app"></div>
 </main>
 <nav class="tabs glass" role="tablist" id="tabs" aria-label="Разделы">
-  <button class="tab" role="tab" data-tab="week" id="tab-week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Неделя</button>
+  <button class="tab" role="tab" data-tab="week" id="tab-week"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>Меню</button>
   <button class="tab" role="tab" data-tab="recipes" id="tab-recipes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10.5A3.5 3.5 0 0 1 19 8v11.5H8.5A3.5 3.5 0 0 1 5 16z"/><path d="M5 16a3.5 3.5 0 0 1 3.5-3.5H19M9 8h6"/></svg>Рецепты</button>
   <button class="tab" role="tab" data-tab="shop" id="tab-shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.2l2.3 11h10.3l2.2-8H6.4"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>Покупки<span class="count" id="shopCount"></span></button>
 </nav>
@@ -695,7 +704,7 @@ function render(){
   document.getElementById("setBtn").setAttribute("aria-pressed",UI.tab==="settings");
   document.getElementById("barTitle").textContent=TITLES[UI.tab]||"";
   document.getElementById("main").className="wrap"+(UI.tab==="week"||UI.tab==="recipes"?" wide":"");
-  const banner=isExample&&UI.tab!=="settings"?`<div class="banner"><span><b>Это пример.</b> Рецепты и план показывают, как всё работает. Добавьте свой рецепт или измените план, и данные станут вашими.</span><button class="btn sm" data-a="clearExamples">Начать с чистого листа</button></div>`:"";
+  const banner=isExample&&UI.tab!=="settings"?`<div class="banner"><span><b>Это пример.</b> Рецепты и меню показывают, как всё работает. Добавьте свой рецепт или измените меню, и данные станут вашими.</span><button class="btn sm" data-a="clearExamples">Начать с чистого листа</button></div>`:"";
   let html=UI.tab==="settings"?vSettings():UI.tab==="week"?vWeek():UI.tab==="recipes"?vRecipes():vShop();
   if(banner){const a=html.indexOf("</div>",html.indexOf('class="sechead"'))+6;html=html.slice(0,a)+banner+html.slice(a)}
   app.innerHTML=html;
@@ -713,7 +722,6 @@ function render(){
 function vWeek(){
   const W=S.plan.week;
   const today=(new Date().getDay()+6)%7;
-  const opts=S.recipes.map(r=>{const left=leftOf(r);return `<option value="${esc(r.id)}"${left<=0?" disabled":""}>${esc(r.name)} · ${left<=0?"порции закончились":"осталось "+left+" из "+r.servings}</option>`}).join("");
   const over=isExample?[]:S.recipes.filter(r=>leftOf(r)<0);
   const kc=[0,1,2,3,4,5,6].map(d=>dayKcal(W,d));
   const n=entries(W).length;const np=entries(W).reduce((a,x)=>a+(+x.e.servings||0),0);
@@ -722,13 +730,13 @@ function vWeek(){
      <span class="stepper"><button data-a="serv" data-id="${e.id}" data-d="-1" aria-label="Меньше порций"${e.servings<=1?" disabled":""}>−</button><span class="v">${servShort(e.servings)}</span><button data-a="serv" data-id="${e.id}" data-d="1" aria-label="Больше порций"${leftOf(r)<=0?" disabled":""}>+</button></span>
      <button class="chevb" data-a="dishMenu" data-id="${e.id}" aria-label="Перенести или убрать: ${esc(r.name)}">${ICON_CHEV}</button></div>`};
   return `<div class="sechead"><h1>Меню недели</h1><p class="sub">${n?`${n} ${dishWord(n)} · ${trim(np,1)} ${portWord(Math.ceil(np))}`:"Пока ничего не запланировано"}${normOf()?` · норма ${trim(normOf(),0)} ккал в день`:""}</p></div>
-  ${n?`<div class="actions"><button class="btn danger" data-a="clearWeek">Очистить неделю</button></div>`:""}
-  ${over.length?`<div class="banner"><span><b>Порций в плане больше, чем в рецепте:</b> ${over.map(r=>esc(r.name)+" — "+plannedOf(r.id)+" из "+r.servings).join("; ")}. Уберите лишние блюда или увеличьте число порций в рецепте.</span></div>`:""}
+  ${n?`<div class="actions"><button class="btn danger" data-a="clearWeek">Очистить меню</button></div>`:""}
+  ${over.length?`<div class="banner"><span><b>Порций в меню больше, чем в рецепте:</b> ${over.map(r=>esc(r.name)+" — "+plannedOf(r.id)+" из "+r.servings).join("; ")}. Уберите лишние блюда или увеличьте число порций в рецепте.</span></div>`:""}
   ${S.recipes.length?"":`<div class="banner"><span>Сначала добавьте рецепт на вкладке «Рецепты», потом его можно будет поставить на любой день.</span></div>`}
   <div class="week">${DAYS.map((dn,di)=>`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${kc[di]!=null?`<span class="kcal">≈ ${trim(kc[di],0)} ккал${normTag(kc[di])}</span>`:""}</div>
    ${MEALS.map(([m,ml])=>{const key=di+"-"+m;const list=entries(W).filter(x=>x.k===key);
     return `<div class="meal"><div class="meal-label">${ml}</div>${list.map(dish).join("")}
-    ${S.recipes.length?`<select class="add-dish" id="add-${key}" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><option value="">+ блюдо</option>${opts}</select>`:""}</div>`}).join("")}
+    ${S.recipes.length?`<button class="add-dish" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}">+ блюдо</button>`:""}</div>`}).join("")}
   </section>`).join("")}</div>`;
 }
 
@@ -771,16 +779,9 @@ function vSettings(){
     <div class="field"><label for="aiModel">Модель</label><input type="text" id="aiModel" data-ai="model" value="${esc(c.model)}" autocomplete="off" placeholder="название модели из документации сервиса"></div>`}
     <div class="row"><button class="btn primary" data-a="aiSave">Сохранить</button>${auto?"":`<button class="btn" data-a="aiTest" ${UI.busy?"disabled":""}>${UI.busy==="ai"?"Проверяю…":"Проверить подключение"}</button>`}</div>
     ${msgHtml("ai")}</div>`:""}
-   <button class="disc" data-a="setToggle" data-k="prod" aria-expanded="${!!op.prod}"><b>Справочник продуктов</b><span class="val">${prodRows().length}${ICON_CHEV}</span></button>
-   ${op.prod?`<div class="discbody">
-    <p class="muted small" style="margin:0">По нему приложение раскладывает продукты по отделам, подбирает упаковку и считает калории. Он пополняется сам: когда вы меняете вес пачки в покупках или отдел продукта в рецепте, это запоминается. Такие продукты отмечены «ваше».</p>
-    <input type="text" id="prodQ" placeholder="Найти продукт" aria-label="Найти продукт" autocomplete="off">
-    <div class="plist" id="plist">${prodRows().map(r=>`<div class="prow" data-s="${esc(low(r.name+" "+r.cat))}"><div class="pn">${esc(r.name)}${r.user?'<span class="tag ok">ваше</span>':""}</div><div class="pm">${esc([r.cat,r.pack?packLabel(r.pack):"без упаковки",r.per?trim(r.per.kcal,0)+" ккал/100 г":""].filter(Boolean).join(" · "))}</div></div>`).join("")}</div>
-    <p class="muted small" id="pnone" style="margin:0" hidden>Ничего не нашлось. Продукт добавится сам, когда встретится в рецепте.</p>
-   </div>`:""}
    <button class="disc" data-a="setToggle" data-k="data" aria-expanded="${!!op.data}"><b>Перенос данных</b><span class="val">${ICON_CHEV}</span></button>
    ${op.data?`<div class="discbody">
-    <p class="muted small" style="margin:0">Чтобы перенести рецепты и план на другое устройство: скопируйте данные здесь и вставьте там.</p>
+    <p class="muted small" style="margin:0">Чтобы перенести рецепты и меню на другое устройство: скопируйте данные здесь и вставьте там.</p>
     <div class="row"><button class="btn" data-a="exportData">Скопировать мои данные</button><span class="copied" id="copiedD"></span></div>
     <div class="field"><label for="impData">Вставить данные с другого устройства</label><textarea id="impData" style="min-height:90px"></textarea></div>
     <div class="row"><button class="btn" data-a="importData">Загрузить и заменить всё</button></div>
@@ -791,11 +792,11 @@ function vSettings(){
 /* ---------- Recipes ---------- */
 function vRecipes(){
   const sel=UI.sel&&rById(UI.sel);
-  const list=S.recipes.length?`<div class="group">${S.recipes.map(r=>{const n=recipeNut(r);return `<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span><span class="rmeta num"><span>${r.servings} ${servWord(r.servings)}</span><span>${trim(n.kcal,0)} ккал на 1 порцию</span></span>${ICON_CHEV}</button>`}).join("")}</div>`:"";
-  const right=UI.editor?vEditor():sel?vRecipe(sel):vImport();
-  return `<div class="sechead"><h1>Рецепты</h1><p class="sub">${S.recipes.length} ${S.recipes.length%10===1&&S.recipes.length%100!==11?"рецепт":[2,3,4].includes(S.recipes.length%10)&&![12,13,14].includes(S.recipes.length%100)?"рецепта":"рецептов"}</p></div>
-  ${S.recipes.length?`<div class="actions"><button class="btn primary" data-a="newImport">+ Новый рецепт</button><button class="btn danger" data-a="delAll">Удалить все</button></div>`:""}
-  <div class="recipes${S.recipes.length?"":" solo"}">${list?`<div>${list}</div>`:""}<div class="card">${right}</div></div>`;
+  const list=S.recipes.length?`<div class="group">${S.recipes.map(r=>{const n=recipeNut(r);if(UI.pick)return `<label class="ritem pickrow"><input type="checkbox" data-pick="${esc(r.id)}"${UI.pick.includes(r.id)?" checked":""}><span class="t">${esc(r.name)}</span><span class="rmeta num"><span>${r.servings} ${servWord(r.servings)}</span><span>${trim(n.kcal,0)} ккал на 1 порцию</span></span></label>`;return `<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span><span class="rmeta num"><span>${r.servings} ${servWord(r.servings)}</span><span>${trim(n.kcal,0)} ккал на 1 порцию</span></span>${ICON_CHEV}</button>`}).join("")}</div>`:"";
+  const right=UI.editor?vEditor():sel?vRecipe(sel):UI.pick?"":vImport();
+  return `<div class="sechead"><h1>Рецепты</h1><p class="sub">${UI.pick?`Выбрано: ${UI.pick.length} из ${S.recipes.length}`:""}${UI.pick?"":S.recipes.length+" "}${UI.pick?"":S.recipes.length%10===1&&S.recipes.length%100!==11?"рецепт":[2,3,4].includes(S.recipes.length%10)&&![12,13,14].includes(S.recipes.length%100)?"рецепта":"рецептов"}</p></div>
+  ${!S.recipes.length?"":UI.pick?`<div class="actions"><button class="btn sm" data-a="pickToggleAll">${UI.pick.length===S.recipes.length?"Снять все":"Выбрать все"}</button><button class="btn sm danger" data-a="pickDel"${UI.pick.length?"":" disabled"}>Удалить${UI.pick.length?" ("+UI.pick.length+")":""}</button><button class="btn sm primary" data-a="pickDone">Готово</button></div>`:`<div class="actions"><button class="btn primary" data-a="newImport">+ Новый рецепт</button><button class="btn" data-a="pickStart">Выбрать</button></div>`}
+  <div class="recipes${S.recipes.length?"":" solo"}">${list?`<div>${list}</div>`:""}${right?`<div class="card">${right}</div>`:""}</div>`;
 }
 function vImport(){
   const ph=UI.photos||[];const busy=UI.busy==="import";
@@ -842,9 +843,9 @@ function vRecipe(r){
   ${CATS.filter(c=>byCat[c]).map(c=>`<div class="cat"><h3>${c}</h3><ul class="ings">${byCat[c].map(i=>`<li class="${i.pantry?"pantry":""}"><span class="n">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}</span></li>`).join("")}</ul></div>`).join("")}
   <div class="row" style="margin-top:10px"><span class="copied" id="copiedR"></span></div>
   <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
-   ${left<0?`<p class="status err" style="margin:0 0 10px">В плане ${plannedOf(r.id)} порц., а рецепт рассчитан на ${r.servings}. Уберите лишние блюда на неделе или увеличьте число порций в рецепте.</p>`:`<p class="muted small" style="margin:0 0 10px">Рецепт рассчитан на ${r.servings} ${servWord(r.servings)}. В плане: ${plannedOf(r.id)}, ${left>0?"можно добавить ещё "+left:"все порции распределены"}.</p>`}
+   ${left<0?`<p class="status err" style="margin:0 0 10px">В меню ${plannedOf(r.id)} порц., а рецепт рассчитан на ${r.servings}. Уберите лишние блюда из меню или увеличьте число порций в рецепте.</p>`:`<p class="muted small" style="margin:0 0 10px">Рецепт рассчитан на ${r.servings} ${servWord(r.servings)}. В меню: ${plannedOf(r.id)}, ${left>0?"можно добавить ещё "+left:"все порции распределены"}.</p>`}
    <div class="addplan"${left<=0?" hidden":""}>
-    <div class="lbl">Добавить во вкладку «Неделя»</div>
+    <div class="lbl">Добавить в меню</div>
     <div class="row"><select id="slotSel" aria-label="День и приём пищи" style="flex:1 1 170px">${slotOpts}</select><span class="stepper"><button data-a="addServ" data-d="-1" aria-label="Меньше порций">−</button><span class="v">${nAdd} порц.</span><button data-a="addServ" data-d="1" aria-label="Больше порций">+</button></span></div>
     <button class="btn primary wide" data-a="addToPlan" data-id="${esc(r.id)}"${left<=0?" disabled":""}>Добавить: ${DAYS[+sd].toLowerCase()}, ${MEAL_NAME[sm]} · ${nAdd} порц.</button><span class="copied" id="addedMsg"></span>
    </div>
@@ -852,14 +853,15 @@ function vRecipe(r){
 }
 function vEditor(){
   const e=UI.editor;
-  return `<h2>${e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}<p class="lede">Поправьте названия и количества, если нужно. Количество указывается на всё блюдо.</p>
-  <div class="grid2" style="margin-top:14px"><div class="field"><label for="edName">Название</label><input type="text" id="edName" data-ed="name" value="${esc(e.name)}"></div>
+  return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
+  <div class="grid2" style="margin-top:14px"><div class="field"><label for="edName">Название</label><input type="text" id="edName" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
   <div class="field"><label for="edServ">Порций</label><input type="number" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}></div></div>
   ${e.guess?`<p class="hint" id="servHint">В рецепте не сказано, на сколько порций. Посчитал по весу готового блюда: примерно ${trim(e.guess.grams/1000,1)} кг, это около ${e.servings} ${servWord(e.servings)} по ${e.guess.size} г. Если знаете точно, исправьте.</p>`:""}
   <div class="field" style="margin-top:14px"><span>Подходит на</span><div class="checks">${MEALS.map(([m,ml])=>`<label><input type="checkbox" id="ed-m-${m}" data-edm="${m}" ${e.meals.includes(m)?"checked":""}>${ml}</label>`).join("")}</div></div>
+  <div class="lbl" style="margin-top:16px">Ингредиенты</div><p class="muted small" style="margin:0 0 8px">В каждой строке: продукт, сколько его нужно, единица и отдел магазина.</p>
   <div class="editor-rows">${e.ingredients.map((i,ix)=>`<div class="erow">
-   <input type="text" id="ei-n-${ix}" data-ei="${ix}" data-f="name" value="${esc(i.name)}" aria-label="Ингредиент">
-   <input type="number" step="any" min="0" id="ei-q-${ix}" data-ei="${ix}" data-f="qty" value="${i.qty??""}" aria-label="Количество">
+   <input type="text" id="ei-n-${ix}" data-ei="${ix}" data-f="name" value="${esc(i.name)}" aria-label="Ингредиент" placeholder="Продукт, например мука">
+   <input type="number" step="any" min="0" id="ei-q-${ix}" data-ei="${ix}" data-f="qty" value="${i.qty??""}" aria-label="Количество" placeholder="Кол-во">
    <select id="ei-u-${ix}" data-ei="${ix}" data-f="unit" aria-label="Единица">${[...new Set([...UNITS,i.unit])].map(u=>`<option${u===i.unit?" selected":""}>${esc(u)}</option>`).join("")}</select>
    <select id="ei-c-${ix}" data-ei="${ix}" data-f="cat" aria-label="Отдел">${CATS.map(c=>`<option${c===i.cat?" selected":""}>${c}</option>`).join("")}</select>
    <button data-a="rmRow" data-i="${ix}" aria-label="Удалить строку">×</button></div>`).join("")}</div>
@@ -884,8 +886,8 @@ function vShop(){
     ${i.extra?`<button class="qty" data-a="extraSheet" data-id="${esc(i.extra)}" aria-label="Изменить: ${esc(i.name)}">${buyText(i)||"<span class=\"addq\">+ кол-во</span>"}${ICON_CHEV}</button>`
       :`<button class="qty" data-a="itemSheet" data-key="${esc(i.key)}" aria-label="Подробнее: ${esc(i.name)}">${buyText(i)}${ICON_CHEV}</button>`}</div>`};
   const n=plannedCount();
-  if(!buy.length)return `<div class="sechead"><h1>Покупки</h1></div><div class="card empty">Список пуст. Добавьте блюда на вкладке «Неделя» или свой товар ниже.<div style="margin-top:14px"><button class="btn primary" data-a="tab" data-tab="week">Открыть неделю</button></div></div>${extraCard()}`;
-  return `<div class="sechead"><h1>Покупки</h1><p class="sub">${n?`На неделю · ${n} ${dishWord(n)}`:"Свои товары"}</p></div>
+  if(!buy.length)return `<div class="sechead"><h1>Покупки</h1></div><div class="card empty">Список пуст. Добавьте блюда в «Меню» или свой товар ниже.<div style="margin-top:14px"><button class="btn primary" data-a="tab" data-tab="week">Открыть неделю</button></div></div>${extraCard()}`;
+  return `<div class="sechead"><h1>Покупки</h1><p class="sub">${n?`По меню · ${n} ${dishWord(n)}`:"Свои товары"}</p></div>
   <div class="card">${buy.length&&done===buy.length?`<div class="prog alldone"><b>Всё куплено ✓</b><button class="btn sm" data-a="resetChecks">Снять отметки</button></div>`
    :`<div class="prog"><div class="prog-t"><b>Осталось купить ${buy.length-done}</b><span>из ${buy.length}</span></div><div class="bar" role="progressbar" aria-label="Куплено" aria-valuemin="0" aria-valuemax="${buy.length}" aria-valuenow="${done}"><i style="width:${buy.length?Math.round(done/buy.length*100):0}%"></i></div></div>`}</div>
   <div class="actions" style="margin:12px 0 0"><button class="btn sm" data-a="shareShop"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться списком</button><button class="btn sm danger" data-a="clearList">Очистить список</button>${done&&done<buy.length?`<button class="btn sm ghost" data-a="resetChecks">Снять отметки</button>`:""}<span class="copied" id="copiedS"></span></div>
@@ -918,12 +920,23 @@ function vSheet(){
      <div class="lbl" style="margin-top:14px"><label for="xCat">Отдел</label></div><select id="xCat">${CATS.map(c=>`<option${c===x.cat?" selected":""}>${c}</option>`).join("")}</select>
      <div class="cta"><button class="btn danger" data-a="rmExtra" data-id="${esc(x.id)}">Удалить</button><button class="btn primary" data-a="extraSave" data-id="${esc(x.id)}">Сохранить</button></div>`;
   }
+  if(s.t==="pick"){
+    const [d,m]=s.k.split("-");const fit=S.recipes.filter(r=>(r.meals||[]).includes(m));
+    const all=UI.pickAll||!fit.length;const q=low(UI.pickQ||"");
+    const list=(all?S.recipes:fit).slice().sort((a,b)=>(b.used||0)-(a.used||0)||a.name.localeCompare(b.name,"ru"));
+    return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
+     <input type="text" enterkeyhint="search" id="pickQ" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.pickQ||"")}">
+     ${fit.length&&fit.length<S.recipes.length?`<div class="seg" style="margin-top:10px" role="radiogroup" aria-label="Какие рецепты показать"><button role="radio" aria-checked="${!all}" data-a="pickAll" data-v="">Для ${{b:"завтрака",l:"обеда",d:"ужина"}[m]} · ${fit.length}</button><button role="radio" aria-checked="${all}" data-a="pickAll" data-v="1">Все · ${S.recipes.length}</button></div>`:""}
+     <div class="sgroup picklist" id="pickList">${list.map(r=>{const left=leftOf(r);return `<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${left<=0?" disabled":""}${q&&!low(r.name).includes(q)?" hidden":""}><span>${esc(r.name)}</span><span class="m">${left<=0?"порции закончились":"осталось "+left+" из "+r.servings}</span></button>`}).join("")}</div>
+     <p class="muted small" id="pickNone"${list.some(r=>!q||low(r.name).includes(q))?" hidden":""}>Ничего не найдено.</p>
+     <p class="muted small" style="margin:0">Сверху рецепты, которые вы ставили в меню последними.</p>`;
+  }
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
     return `<h3>${esc(r.name)}</h3><p class="need">${DAYS[x.d]}, ${MEAL_NAME[x.m]} · ${servShort(x.e.servings)}</p>
      <div class="lbl"><label for="mv-${x.e.id}">Перенести на другой период</label></div>
      <select id="mv-${x.e.id}" data-move="${x.e.id}"><option value="">Выберите день…</option>${DAYS.map((dd,di)=>MEALS.map(([m,ml])=>di+"-"+m===x.k?"":`<option value="${di}-${m}">${DAYS_S[di]}, ${ml.toLowerCase()}</option>`).join("")).join("")}</select>
-     <div class="cta"><button class="btn danger" data-a="rmDish" data-id="${x.e.id}">Убрать из плана</button><button class="btn primary" data-a="closeSheet">Готово</button></div>`;
+     <div class="cta"><button class="btn danger" data-a="rmDish" data-id="${x.e.id}">Убрать из меню</button><button class="btn primary" data-a="closeSheet">Готово</button></div>`;
   }
   return"";
 }
@@ -1284,13 +1297,11 @@ document.body.addEventListener("click",e=>{
   switch(a){
     case "tab":go(b.dataset.tab);break;
     case "clearExamples":S={recipes:[],plan:Object.assign(emptyPlan(),S.plan.norm?{norm:S.plan.norm}:{}),products:S.products||{}};isExample=false;UI.sel=null;UI.editor=null;UI.preview=null;localSave();if(store.mode==="db")serial(()=>col().doc("plan").set(clean(S.plan)));render();break;
-    case "clearWeek":materialize();undoable("Неделя очищена");S.plan.week={};S.plan.checks={};S.plan.removed={};savePlan();render();break;
+    case "clearWeek":materialize();undoable("Меню очищено");S.plan.week={};S.plan.checks={};S.plan.removed={};savePlan();render();break;
     case "clearList":{materialize();undoable("Список очищен");S.plan.removed=S.plan.removed||{};
       for(const i of shoppingList())if(!i.extra)S.plan.removed[i.key]=i.v;
       S.plan.extras=[];S.plan.checks={};savePlan();render();break}
     case "rmItem":{const i=shoppingList().find(x=>x.key===b.dataset.key);if(!i)return;materialize();S.plan.removed=S.plan.removed||{};S.plan.removed[i.key]=i.v;delete S.plan.checks[i.key];UI.sheet=null;savePlan();render();break}
-    case "delAll":{materialize();undoable("Все рецепты удалены");const ids=S.recipes.map(r=>r.id);S.recipes=[];S.plan.week={};S.plan.checks={};
-      ids.forEach(deleteRecipeStore);savePlan();UI.sel=null;UI.editor=null;render();break}
     case "undo":{const u=UI.undo;if(!u)return;S.recipes=u.snap.recipes;S.plan=u.snap.plan;migrate();
       if(store.mode==="db"){S.recipes.forEach(saveRecipe);savePlan()}else localSave();UI.undo=null;clearInterval(UI.undoT);render();break}
     case "togglePlanner":UI.planner=!UI.planner;render();break;
@@ -1319,7 +1330,7 @@ document.body.addEventListener("click",e=>{
     case "parsePhotos":parsePhotos();break;
     case "stopAI":aiCtl?.abort();break;
     case "parseLocal":parseLocal();break;
-    case "manual":UI.impText=document.getElementById("impText").value;openEditor({name:"",servings:2,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
+    case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:2,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
     case "addRow":UI.editor.ingredients.push({name:"",qty:null,unit:"г",cat:"Другое",pantry:false});render();document.getElementById("ei-n-"+(UI.editor.ingredients.length-1))?.focus();break;
     case "rmRow":UI.editor.ingredients.splice(+b.dataset.i,1);render();break;
     case "cancelEditor":UI.editor=null;render();break;
@@ -1337,7 +1348,7 @@ document.body.addEventListener("click",e=>{
         if(i.cat&&i.cat!=="Другое"&&(!L||L.cat!==i.cat))d.cat=i.cat;
         if(!L){if(i.per100)d.per100=i.per100;if(i.pack)d.pack=i.pack;if(i.gpp)d.gpp=i.gpp}
         if(Object.keys(d).length)learn(i.name,d)}
-      saveRecipe(r);if(ed.isNew){UI.impText="";UI.impUrl=""}UI.editor=null;UI.sel=r.id;UI.scale=null;render();break}
+      saveRecipe(r);if(ed.isNew){UI.impText="";UI.impUrl=""}UI.editor=null;UI.sel=null;UI.scale=null;render();scrollTo({top:0});break}
     case "home":{materialize();const k=b.dataset.key;const it=shoppingList().find(i=>i.key===k);const want=b.dataset.h!=="1";
       if(it&&want===it.pantry)delete S.plan.home[k];else S.plan.home[k]=want;savePlan();render();break}
     case "aiSave":{const c=UI.aiDraft;try{localStorage.setItem("kz-ai",JSON.stringify(c))}catch(e){}setMsg("ai","Сохранено.");break}
@@ -1354,6 +1365,16 @@ document.body.addEventListener("click",e=>{
     case "theme":try{localStorage.setItem("kz-theme",b.dataset.v)}catch(e){}applyTheme();applyPalette();render();break;
     case "rmPhoto":UI.photos.splice(+b.dataset.i,1);render();break;
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
+    case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickAll=false;render();break;
+    case "pickAll":UI.pickAll=!!b.dataset.v;render();break;
+    case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=Math.min(S.plan.people,leftOf(r));if(sv<=0)return;
+      materialize();(S.plan.week[k]=S.plan.week[k]||[]).push({id:uid(),rid:r.id,servings:sv});r.used=Date.now();saveRecipe(r);UI.sheet=null;savePlan();render();break}
+    case "pickStart":UI.pick=[];UI.sel=null;UI.editor=null;render();break;
+    case "pickDone":UI.pick=null;render();break;
+    case "pickToggleAll":UI.pick=UI.pick.length===S.recipes.length?[]:S.recipes.map(r=>r.id);render();break;
+    case "pickDel":{const ids=UI.pick;if(!ids.length)return;materialize();undoable(ids.length===1?"Рецепт удалён":"Удалено рецептов: "+ids.length);
+      S.recipes=S.recipes.filter(r=>!ids.includes(r.id));entries(W).filter(x=>ids.includes(x.e.rid)).forEach(x=>rmEntry(W,x.e.id));ids.forEach(deleteRecipeStore);
+      UI.pick=null;savePlan();render();break}
     case "itemSheet":UI.sheet={t:"item",key:b.dataset.key};render();break;
     case "closeSheet":UI.sheet=null;render();break;
     case "pal":setPal({id:b.dataset.v});render();break;
@@ -1379,9 +1400,9 @@ document.body.addEventListener("click",e=>{
 });
 document.body.addEventListener("change",e=>{
   const t=e.target;
-  if(t.matches("select.add-dish")&&t.value){const r=rById(t.value);const sv=Math.min(S.plan.people,leftOf(r));if(sv<=0){render();return}materialize();(S.plan.week[t.dataset.k]=S.plan.week[t.dataset.k]||[]).push({id:uid(),rid:t.value,servings:sv});savePlan();render();return}
   if(t.dataset.ai==="preset"){const p=PRESETS[t.value];UI.aiDraft=Object.assign({},UI.aiDraft,{preset:t.value,url:p.url||"",model:p.model||""});render();return}
   if(t.id==="slotSel"){UI.slot=t.value;render();return}
+  if(t.dataset.pick){const id=t.dataset.pick;UI.pick=t.checked?[...UI.pick,id]:UI.pick.filter(x=>x!==id);render();return}
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
   if(t.id==="impPhoto"&&t.files.length){UI.impText=document.getElementById("impText").value;addPhotos([...t.files]);return}
   if(t.dataset.move&&t.value){materialize();const W=S.plan.week;const x=findEntry(W,t.dataset.move);if(!x)return;
@@ -1398,7 +1419,7 @@ document.addEventListener("focusout",e=>{if(e.target.matches?.("input,textarea,s
 if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height})}
 document.body.addEventListener("input",e=>{
   const t=e.target;
-  if(t.id==="prodQ"){const q=low(t.value);let n=0;document.querySelectorAll("#plist .prow").forEach(r=>{const on=!q||r.dataset.s.includes(q);r.hidden=!on;if(on)n++});document.getElementById("pnone").hidden=n>0;return}
+  if(t.id==="pickQ"){UI.pickQ=t.value;const q=low(t.value);let n=0;document.querySelectorAll("#pickList .pk").forEach(r=>{const on=!q||r.dataset.s.includes(q);r.hidden=!on;if(on)n++});document.getElementById("pickNone").hidden=n>0;return}
   if(t.id==="hue"){setPal({id:"custom",h:+t.value});document.querySelectorAll("[data-a=pal]").forEach(x=>x.setAttribute("aria-checked","false"));return}
   if(t.dataset.ai&&t.dataset.ai!=="preset"){UI.aiDraft[t.dataset.ai]=t.value}
   else if(t.id==="edServ"&&UI.editor.guess){UI.editor.servings=t.value;delete UI.editor.guess;t.classList.remove("warnf");document.getElementById("servHint")?.remove()}
