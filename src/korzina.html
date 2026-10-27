@@ -300,13 +300,12 @@ button.add-dish{text-align:left;cursor:pointer}
 .toast .cd{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-left:6px;border-radius:50%;background:var(--accent-ink);color:var(--accent);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
 .toast.glass{background:var(--ink);color:var(--bg);border:0;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 8px 24px var(--shadow)}
 /* sheet */
-.scrim{position:fixed;inset:0;z-index:40;background:var(--dim);opacity:0;pointer-events:none;transition:opacity .25s}
+.scrim{position:fixed;inset:0;z-index:40;background:var(--dim);opacity:0;pointer-events:none;transition:opacity .5s cubic-bezier(.32,.72,0,1)}
 .scrim.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;z-index:41;left:50%;bottom:0;width:min(640px,100%);max-height:85vh;overflow:auto;transform:translate(-50%,105%);transition:transform .35s cubic-bezier(.2,.8,.2,1);
+.sheet{position:fixed;z-index:41;left:50%;bottom:0;width:min(640px,100%);max-height:85vh;overflow:auto;transform:translate(-50%,105%);transition:transform .5s cubic-bezier(.32,.72,0,1);will-change:transform;
   border-radius:28px 28px 0 0;border-bottom:0;padding:8px max(20px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-right,0px))}
 .sheet.on{transform:translate(-50%,0)}
 .sheet,.picklist{overscroll-behavior:contain}
-html.sheet-open,html.sheet-open body{overflow:hidden}
 .grab{width:38px;height:5px;border-radius:99px;background:var(--muted);opacity:.45;margin:4px auto 14px}
 .sheet h3{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em}
 .sheet .need{color:var(--muted);font-size:15px;margin:0 0 16px}
@@ -765,14 +764,23 @@ const TITLES={week:"Меню недели",recipes:"Рецепты",shop:"Пок
 const sheetEl=document.getElementById("sheet"),scrimEl=document.getElementById("scrim");
 scrimEl.addEventListener("click",()=>{UI.sheet=null;render()});
 scrimEl.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
-/* pull the sheet down to close it, like iOS sheets; inner lists scroll first */
+/* pull the sheet down to close it, like iOS sheets: it follows the finger (with resistance when pulled up),
+   the dimming fades with it, and on release it glides away or springs back depending on distance and speed */
 let sdr=null;
-sheetEl.addEventListener("touchstart",e=>{sdr={y:e.touches[0].clientY,t:Date.now(),sc:e.target.closest(".picklist"),dy:0,on:false}},{passive:true});
-sheetEl.addEventListener("touchmove",e=>{if(!sdr)return;const dy=e.touches[0].clientY-sdr.y;
-  if(!sdr.on){const top=sheetEl.scrollTop<=0&&(!sdr.sc||sdr.sc.scrollTop<=0);if(dy>6&&top)sdr.on=true;else if(Math.abs(dy)>6){sdr=null;return}else return}
-  e.preventDefault();sdr.dy=Math.max(0,dy);sheetEl.style.transition="none";sheetEl.style.transform=`translate(-50%,${sdr.dy}px)`},{passive:false});
-sheetEl.addEventListener("touchend",()=>{if(!sdr)return;const {dy,on,t}=sdr;sdr=null;if(!on)return;sheetEl.style.transition="";sheetEl.style.transform="";
-  if(dy>100||dy/(Date.now()-t)>.5){UI.sheet=null;render()}});
+const EASE="cubic-bezier(.32,.72,0,1)";
+function sheetPos(y){sheetEl.style.transform=`translate(-50%,${y}px)`;scrimEl.style.opacity=String(Math.max(0,1-y/(sheetEl.offsetHeight||1)))}
+sheetEl.addEventListener("touchstart",e=>{const y=e.touches[0].clientY;sdr={y0:y,sc:e.target.closest(".picklist"),dy:0,on:false,pts:[[y,performance.now()]]}},{passive:true});
+sheetEl.addEventListener("touchmove",e=>{if(!sdr)return;const y=e.touches[0].clientY,dy=y-sdr.y0;
+  if(!sdr.on){const top=sheetEl.scrollTop<=0&&(!sdr.sc||sdr.sc.scrollTop<=0);if(dy>4&&top){sdr.on=true;sdr.y0=y;sheetEl.style.transition="none";scrimEl.style.transition="none"}else if(Math.abs(dy)>4){sdr=null;return}else return}
+  e.preventDefault();const d=y-sdr.y0;sdr.dy=d>0?d:-Math.sqrt(-d)*2;sdr.pts.push([y,performance.now()]);if(sdr.pts.length>5)sdr.pts.shift();
+  if(!sdr.raf)sdr.raf=requestAnimationFrame(()=>{if(sdr){sdr.raf=0;sheetPos(sdr.dy)}})},{passive:false});
+sheetEl.addEventListener("touchend",()=>{if(!sdr)return;const {dy,on,pts}=sdr;sdr=null;if(!on)return;
+  const [a,b]=[pts[0],pts[pts.length-1]];const v=(b[0]-a[0])/Math.max(1,b[1]-a[1]);/* px per ms */
+  const close=dy>sheetEl.offsetHeight*.3||(v>.45&&dy>10);
+  const ms=close?Math.max(180,Math.min(380,(sheetEl.offsetHeight-dy)/Math.max(v,1.2))):420;
+  sheetEl.style.transition=`transform ${ms}ms ${EASE}`;scrimEl.style.transition=`opacity ${ms}ms ${EASE}`;
+  if(close){sheetPos(sheetEl.offsetHeight+40);setTimeout(()=>{UI.sheet=null;render();requestAnimationFrame(()=>{sheetEl.style.cssText="";scrimEl.style.cssText=""})},ms)}
+  else{sheetEl.style.transform="";scrimEl.style.opacity="";setTimeout(()=>{sheetEl.style.transition="";scrimEl.style.transition=""},ms)}});
 const topbar=document.getElementById("topbar");
 addEventListener("scroll",()=>topbar.classList.toggle("on",scrollY>48),{passive:true});
 addEventListener("keydown",e=>{if(e.key==="Escape"&&UI.sheet){UI.sheet=null;render()}});
