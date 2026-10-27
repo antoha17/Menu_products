@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=bbb02008">
+<link rel="manifest" href="manifest.webmanifest?v=30d8ca69">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -187,6 +187,9 @@ button.qty{cursor:pointer}
 .wres{display:flex;flex-direction:column;gap:10px;margin-top:12px}
 .wbtns{display:flex;gap:8px;align-items:center;margin-top:6px}
 .wbtns .btn{flex:none}
+.wact{display:flex;gap:8px}
+.iconb{padding:8px 10px}
+.iconb .shi{margin:0}
 .wtop{display:flex;justify-content:space-between;align-items:center}
 .wr{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;background:var(--fill)}
 .wr .wi{color:var(--ink);opacity:.8}
@@ -923,16 +926,16 @@ function vImport(){
   const ph=UI.photos||[];const busy=UI.busy==="import";
   return `<div class="addhead"><h2>Новый рецепт</h2><button class="btn sm" data-a="manual" aria-label="Заполнить рецепт вручную"><svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Вручную</button>${S.recipes.length?`<button class="btn sm ghost" data-a="closeImport" aria-label="Закрыть">✕</button>`:""}</div>
   <div class="blk">
-   <div class="lbl lblrow"><label for="webQ">Найти в интернете</label><span class="aib" title="Ищет искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/></svg>ищет ИИ</span></div>
+   <div class="lbl lblrow"><label for="webQ">Найти в интернете</label><span class="aib" title="Ищет искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>Ищет ИИ</span></div>
    <div class="addrow"><input type="text" id="webQ" enterkeyhint="search" autocomplete="off" placeholder="Например, сырники" value="${esc(UI.webQ||"")}"${UI.busy==="web"?" disabled":""}><button class="btn primary" data-a="webSearch"${UI.busy==="web"?" disabled":""}>Найти</button></div>
    ${UI.busy==="web"?`<div class="row" style="margin-top:10px"><span class="muted small" id="webCd" style="font-variant-numeric:tabular-nums">${esc(UI.msg.web?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`:msgHtml("web")}
-   ${UI.webRes&&UI.busy!=="web"?`<div class="wres"><div class="wtop"><span class="muted small">Найдено: ${UI.webRes.length}</span><button class="btn sm" data-a="webMore" aria-label="Показать другие варианты"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>Другие варианты</button></div>${UI.webRes.map((x,ix)=>{const r=normRecipe(x,"");const k=recipeNut(r).kcal;return `<div class="wr"><b>${esc(r.name)}</b>
+   ${UI.webRes&&UI.busy!=="web"?`<div class="wres"><div class="wtop"><span class="muted small">Найдено: ${UI.webRes.length}</span><span class="wact"><button class="btn sm iconb" data-a="webReset" aria-label="Сбросить поиск" title="Сбросить поиск"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><button class="btn sm" data-a="webMore" aria-label="Показать другие варианты"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>Другие варианты</button></span></div>${UI.webRes.map((x,ix)=>{const r=normRecipe(x,"");const k=recipeNut(r).kcal;return `<div class="wr"><b>${esc(r.name)}</b>
      <span class="muted small">${[x.site?esc(x.site):"",r.servings+" "+servWord(r.servings),k?"≈ "+trim(k,0)+" ккал на порцию":""].filter(Boolean).join(" · ")}</span>
      <span class="small wi">${esc(r.ingredients.slice(0,8).map(i=>i.name.toLowerCase()).join(", "))}${r.ingredients.length>8?" и ещё "+(r.ingredients.length-8):""}</span>
      <span class="wbtns"><button class="btn sm primary" data-a="webTake" data-i="${ix}">Добавить к себе</button>${/^https?:\/\//.test(x.source||"")?`<a class="btn sm ghost" href="${esc(x.source)}" target="_blank" rel="noopener">Открыть сайт ↗</a>`:""}</span></div>`}).join("")}</div>`:""}
   </div>
   <div class="blk">
-   <div class="lbl lblrow"><span>Фото рецепта</span><span class="aib" title="Фото распознаёт искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>распознаёт ИИ</span></div>
+   <div class="lbl lblrow"><span>Фото рецепта</span><span class="aib" title="Фото распознаёт искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>Распознаёт ИИ</span></div>
    ${ph.length?`<div class="photos">${ph.map((x,i)=>`<span class="ph"><img src="${x.dataUrl}" alt="Фото рецепта ${i+1}"><button data-a="rmPhoto" data-i="${i}" aria-label="Убрать фото">×</button></span>`).join("")}</div>`:""}
    <div class="row">${ph.length<4?`<label class="btn wide" for="impPhoto">${ph.length?"+ ещё фото":"Сфотографировать или выбрать фото"}</label><input type="file" id="impPhoto" accept="image/*" multiple hidden>`:""}
    ${ph.length&&!busy?`<button class="btn primary wide" data-a="parsePhotos">Найти ингредиенты на ${ph.length>1?ph.length+" фото":"фото"}</button>`:""}</div>
@@ -943,8 +946,7 @@ function vImport(){
    <textarea id="impText" placeholder="Вставьте рецепт целиком или только список ингредиентов">${esc(UI.impText||"")}</textarea>
    <button class="btn primary wide" data-a="parseText" ${busy?"disabled":""}>Найти ингредиенты</button>
   </div>
-  ${busy?`<div class="row" style="margin-top:12px"><span class="muted">Ищу ингредиенты…</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`:""}
-  ${msgHtml("import")}`;
+  ${busy?`<div class="row" style="margin-top:12px"><span class="muted small" id="importCd" style="font-variant-numeric:tabular-nums">${esc(UI.msg.import?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`:msgHtml("import")}`;
 }
 /* pasted text is always read by the built-in rules, so it works offline; only photos go to the AI */
 function aiReady(){const c=aiCfg();return c.preset==="auto"?!!window.claude:!!(c.url&&c.key&&c.model)}
@@ -1204,10 +1206,11 @@ async function callAI(prompt,signal,c=aiCfg(),images=[],web=false){
 async function ask(area,prompt,images=[],web=false){
   const NOCONN="Нет соединения с интернетом.";
   if(!navigator.onLine){setMsg(area,NOCONN,true);return null}
-  const wait=90;const t0=Date.now();const cdText=()=>"Ищу рецепты… осталось "+Math.max(0,wait-Math.floor((Date.now()-t0)/1000))+" с";
-  UI.busy=area;UI.msg[area]={t:web?cdText():"ИИ думает, обычно это 10–60 секунд…",err:false};render();
-  /* visible countdown so a slow search does not look frozen */
-  const cd=web?setInterval(()=>{UI.msg[area].t=cdText();const el=document.getElementById("webCd");if(el)el.textContent=UI.msg[area].t},1000):0;
+  const wait=90;const t0=Date.now();const what=web?"Ищу рецепты":area==="import"?"Распознаю фото":"ИИ думает";
+  const cdText=()=>what+"… осталось "+Math.max(0,wait-Math.floor((Date.now()-t0)/1000))+" с";
+  UI.busy=area;UI.msg[area]={t:cdText(),err:false};render();
+  /* visible countdown so a slow answer does not look frozen */
+  const cd=setInterval(()=>{UI.msg[area].t=cdText();const el=document.getElementById(area+"Cd");if(el)el.textContent=UI.msg[area].t},1000);
   aiCtl=new AbortController();let late=false;const tm=setTimeout(()=>{late=true;aiCtl.abort()},wait*1000);
   try{const res=await callAI(prompt,aiCtl.signal,aiCfg(),images,web);UI.busy=null;UI.msg[area]={t:""};return res}
   catch(e){UI.busy=null;if(e.code==="cancelled"&&!late)setMsg(area,"Остановлено.");else setMsg(area,NOCONN,true);return null}
@@ -1522,6 +1525,7 @@ document.body.addEventListener("click",e=>{
     case "parsePhotos":parsePhotos();break;
     case "webSearch":webSearch(false);break;
     case "webMore":webSearch(true);break;
+    case "webReset":UI.webRes=null;UI.webQ="";UI.webSeen=[];UI.webLastQ="";UI.msg.web={t:""};render();document.getElementById("webQ")?.focus();break;
     case "webTake":{const x=UI.webRes?.[+b.dataset.i];if(!x)return;const r=normRecipe(x,/^https?:\/\//.test(x.source||"")?x.source:"");r.note="Рецепт найден в интернете. Сверьте количества с сайтом по ссылке, если сомневаетесь.";openEditor(r,true);break}
     case "stopAI":aiCtl?.abort();break;
     case "parseLocal":parseLocal();break;
