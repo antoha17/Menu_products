@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=567ae7ed">
+<link rel="manifest" href="manifest.webmanifest?v=ce313ccf">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1403,6 +1403,11 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.edm){const ed=UI.editor;ed.meals=MEALS.map(x=>x[0]).filter(m=>m===t.dataset.edm?t.checked:ed.meals.includes(m));return}
   if(t.dataset.ei!=null){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="unit"&&t.value==="по вкусу")i.qty=null}
 });
+/* iOS web apps sometimes leave fixed bars (tab bar, background) lifted by the keyboard's height after it closes;
+   a 1px scroll nudge makes Safari recompute the viewport */
+function fixViewport(){setTimeout(()=>{const y=scrollY;scrollTo(scrollX,y+1);scrollTo(scrollX,y)},60)}
+document.addEventListener("focusout",e=>{if(e.target.matches?.("input,textarea,select"))fixViewport()});
+if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height})}
 document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.id==="prodQ"){const q=low(t.value);let n=0;document.querySelectorAll("#plist .prow").forEach(r=>{const on=!q||r.dataset.s.includes(q);r.hidden=!on;if(on)n++});document.getElementById("pnone").hidden=n>0;return}
