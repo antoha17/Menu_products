@@ -35,8 +35,8 @@ self.addEventListener("fetch",e=>{
   const u=new URL(r.url);
   if(/\\.(png|webmanifest)$/.test(u.pathname))return;
   if(u.origin===location.origin){
-    // app files: try the network first so updates arrive, fall back to cache offline
-    e.respondWith(fetch(r).then(res=>{const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));return res}).catch(()=>caches.match(r).then(m=>m||caches.match("index.html"))));
+    // app files: always ask the server (GitHub Pages lets browsers cache for 10 min), fall back to cache offline
+    e.respondWith(fetch(r.url,{cache:"no-cache",credentials:"same-origin"}).then(res=>{const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));return res}).catch(()=>caches.match(r).then(m=>m||caches.match("index.html"))));
   }else if(/fonts\\.(googleapis|gstatic)\\.com$/.test(u.hostname)){
     e.respondWith(caches.match(r).then(m=>m||fetch(r).then(res=>{const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));return res})));
   }
