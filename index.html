@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=8e31c1a3">
+<link rel="manifest" href="manifest.webmanifest?v=bbb02008">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -925,7 +925,7 @@ function vImport(){
   <div class="blk">
    <div class="lbl lblrow"><label for="webQ">Найти в интернете</label><span class="aib" title="Ищет искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/></svg>ищет ИИ</span></div>
    <div class="addrow"><input type="text" id="webQ" enterkeyhint="search" autocomplete="off" placeholder="Например, сырники" value="${esc(UI.webQ||"")}"${UI.busy==="web"?" disabled":""}><button class="btn primary" data-a="webSearch"${UI.busy==="web"?" disabled":""}>Найти</button></div>
-   ${UI.busy==="web"?`<div class="row" style="margin-top:10px"><span class="muted small">${esc(UI.msg.web?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`:msgHtml("web")}
+   ${UI.busy==="web"?`<div class="row" style="margin-top:10px"><span class="muted small" id="webCd" style="font-variant-numeric:tabular-nums">${esc(UI.msg.web?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`:msgHtml("web")}
    ${UI.webRes&&UI.busy!=="web"?`<div class="wres"><div class="wtop"><span class="muted small">Найдено: ${UI.webRes.length}</span><button class="btn sm" data-a="webMore" aria-label="Показать другие варианты"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>Другие варианты</button></div>${UI.webRes.map((x,ix)=>{const r=normRecipe(x,"");const k=recipeNut(r).kcal;return `<div class="wr"><b>${esc(r.name)}</b>
      <span class="muted small">${[x.site?esc(x.site):"",r.servings+" "+servWord(r.servings),k?"≈ "+trim(k,0)+" ккал на порцию":""].filter(Boolean).join(" · ")}</span>
      <span class="small wi">${esc(r.ingredients.slice(0,8).map(i=>i.name.toLowerCase()).join(", "))}${r.ingredients.length>8?" и ещё "+(r.ingredients.length-8):""}</span>
@@ -1204,12 +1204,14 @@ async function callAI(prompt,signal,c=aiCfg(),images=[],web=false){
 async function ask(area,prompt,images=[],web=false){
   const NOCONN="Нет соединения с интернетом.";
   if(!navigator.onLine){setMsg(area,NOCONN,true);return null}
-  const wait=web?30:90;
-  UI.busy=area;UI.msg[area]={t:web?"Ищу рецепты…":"ИИ думает, обычно это 10–60 секунд…",err:false};render();
+  const wait=90;const t0=Date.now();const cdText=()=>"Ищу рецепты… осталось "+Math.max(0,wait-Math.floor((Date.now()-t0)/1000))+" с";
+  UI.busy=area;UI.msg[area]={t:web?cdText():"ИИ думает, обычно это 10–60 секунд…",err:false};render();
+  /* visible countdown so a slow search does not look frozen */
+  const cd=web?setInterval(()=>{UI.msg[area].t=cdText();const el=document.getElementById("webCd");if(el)el.textContent=UI.msg[area].t},1000):0;
   aiCtl=new AbortController();let late=false;const tm=setTimeout(()=>{late=true;aiCtl.abort()},wait*1000);
   try{const res=await callAI(prompt,aiCtl.signal,aiCfg(),images,web);UI.busy=null;UI.msg[area]={t:""};return res}
   catch(e){UI.busy=null;if(e.code==="cancelled"&&!late)setMsg(area,"Остановлено.");else setMsg(area,NOCONN,true);return null}
-  finally{clearTimeout(tm)}
+  finally{clearTimeout(tm);clearInterval(cd)}
 }
 async function parseAI(){
   const text=document.getElementById("impText").value.trim();const url="";const photos=UI.photos||[];
