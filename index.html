@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=73523018">
+<link rel="manifest" href="manifest.webmanifest?v=8e31c1a3">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -185,6 +185,9 @@ button.qty{cursor:pointer}
 .chip:focus,.chip:focus-visible,.pk:focus{outline:none}
 .addcard{margin-bottom:16px}
 .wres{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.wbtns{display:flex;gap:8px;align-items:center;margin-top:6px}
+.wbtns .btn{flex:none}
+.wtop{display:flex;justify-content:space-between;align-items:center}
 .wr{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:14px;background:var(--fill)}
 .wr .wi{color:var(--ink);opacity:.8}
 .wr .row{margin-top:6px;justify-content:flex-start;flex-wrap:nowrap}
@@ -921,12 +924,12 @@ function vImport(){
   return `<div class="addhead"><h2>Новый рецепт</h2><button class="btn sm" data-a="manual" aria-label="Заполнить рецепт вручную"><svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Вручную</button>${S.recipes.length?`<button class="btn sm ghost" data-a="closeImport" aria-label="Закрыть">✕</button>`:""}</div>
   <div class="blk">
    <div class="lbl lblrow"><label for="webQ">Найти в интернете</label><span class="aib" title="Ищет искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/></svg>ищет ИИ</span></div>
-   <div class="addrow"><input type="text" id="webQ" enterkeyhint="search" autocomplete="off" placeholder="Например, сырники или ужин из курицы" value="${esc(UI.webQ||"")}"${UI.busy==="web"?" disabled":""}><button class="btn primary" data-a="webSearch"${UI.busy==="web"?" disabled":""}>Найти</button></div>
+   <div class="addrow"><input type="text" id="webQ" enterkeyhint="search" autocomplete="off" placeholder="Например, сырники" value="${esc(UI.webQ||"")}"${UI.busy==="web"?" disabled":""}><button class="btn primary" data-a="webSearch"${UI.busy==="web"?" disabled":""}>Найти</button></div>
    ${UI.busy==="web"?`<div class="row" style="margin-top:10px"><span class="muted small">${esc(UI.msg.web?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`:msgHtml("web")}
-   ${UI.webRes&&UI.busy!=="web"?`<div class="wres">${UI.webRes.map((x,ix)=>{const r=normRecipe(x,"");const k=recipeNut(r).kcal;return `<div class="wr"><b>${esc(r.name)}</b>
+   ${UI.webRes&&UI.busy!=="web"?`<div class="wres"><div class="wtop"><span class="muted small">Найдено: ${UI.webRes.length}</span><button class="btn sm" data-a="webMore" aria-label="Показать другие варианты"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg>Другие варианты</button></div>${UI.webRes.map((x,ix)=>{const r=normRecipe(x,"");const k=recipeNut(r).kcal;return `<div class="wr"><b>${esc(r.name)}</b>
      <span class="muted small">${[x.site?esc(x.site):"",r.servings+" "+servWord(r.servings),k?"≈ "+trim(k,0)+" ккал на порцию":""].filter(Boolean).join(" · ")}</span>
      <span class="small wi">${esc(r.ingredients.slice(0,8).map(i=>i.name.toLowerCase()).join(", "))}${r.ingredients.length>8?" и ещё "+(r.ingredients.length-8):""}</span>
-     <span class="row"><button class="btn sm primary" data-a="webTake" data-i="${ix}">Добавить к себе</button>${/^https?:\/\//.test(x.source||"")?`<a class="btn sm ghost" href="${esc(x.source)}" target="_blank" rel="noopener">Открыть сайт ↗</a>`:""}</span></div>`}).join("")}</div>`:""}
+     <span class="wbtns"><button class="btn sm primary" data-a="webTake" data-i="${ix}">Добавить к себе</button>${/^https?:\/\//.test(x.source||"")?`<a class="btn sm ghost" href="${esc(x.source)}" target="_blank" rel="noopener">Открыть сайт ↗</a>`:""}</span></div>`}).join("")}</div>`:""}
   </div>
   <div class="blk">
    <div class="lbl lblrow"><span>Фото рецепта</span><span class="aib" title="Фото распознаёт искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>распознаёт ИИ</span></div>
@@ -950,21 +953,22 @@ function parseText(){
   if(!text){setMsg("import","Вставьте текст рецепта в поле выше.",true);return}
   const keep=UI.photos;UI.photos=[];parseLocal();UI.photos=keep;
 }
-async function webSearch(){
+async function webSearch(more){
   const q=(document.getElementById("webQ")?.value||"").trim();UI.webQ=q;
   if(!q){setMsg("web","Напишите, что найти, например «сырники».",true);return}
   const c=aiCfg();
-  if(!aiReady()||c.preset==="auto"){setMsg("web","Поиск работает через ИИ. Подключите его в ⚙ Настройках → «ИИ для разбора рецептов».",true);return}
-  if(!webOK(c)){setMsg("web",`${PRESETS[c.preset]?.label||"Этот сервис"} не умеет искать в интернете. Подойдут OpenAI, Anthropic или OpenRouter.`,true);return}
-  UI.webRes=null;
+  if(!aiReady()||c.preset==="auto"||!webOK(c)){setMsg("web","ИИ для поиска не подключён в ⚙ Настройках.",true);return}
+  if(!more||q!==UI.webLastQ)UI.webSeen=[];UI.webLastQ=q;
+  const seen=UI.webSeen||[];UI.webRes=null;
   const res=await ask("web",`Найди в интернете 4 разных рецепта по запросу: «${q}».
-Ищи на русскоязычных сайтах с рецептами (povarenok.ru, eda.ru, russianfood.com, gastronom.ru, 1000.menu и похожих). Бери данные только со страниц, которые ты действительно открыл. Не придумывай рецепты, ингредиенты и ссылки.
+${seen.length?`Не предлагай эти рецепты, нужны другие варианты: ${seen.join("; ")}.
+`:""}Ищи на русскоязычных сайтах с рецептами (povarenok.ru, eda.ru, russianfood.com, gastronom.ru, 1000.menu и похожих). Бери данные только со страниц, которые ты действительно открыл. Не придумывай рецепты, ингредиенты и ссылки.
 Верни ТОЛЬКО JSON без пояснений: {"recipes": [${RECIPE_SCHEMA.slice(0,-1)}, "source": "полная ссылка на страницу рецепта", "site": "домен сайта"}]}
 ${RULES}`,[],true);
   if(!res)return;
   const list=(res.recipes||[]).filter(x=>x&&x.name&&(x.ingredients||[]).length);
   if(!list.length){setMsg("web","Ничего подходящего не нашлось. Попробуйте сформулировать иначе.",true);return}
-  UI.webRes=list;render();
+  UI.webRes=list;UI.webSeen=[...seen,...list.map(x=>x.name)];render();
 }
 async function parsePhotos(){
   if(!(UI.photos||[]).length)return;
@@ -1004,7 +1008,7 @@ function nutRow(i,ix){const pc=PIECES.includes(i.unit)&&!gppOf(i);const v=k=>i.p
    ${pc?`<label class="gp"><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="gpp" value="${i.gpp||""}" placeholder="0"><small>г в 1 ${esc(i.unit)}</small></label>`:""}</div>`}
 function vEditor(){
   const e=UI.editor;
-  return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
+  return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}${e.source?`<p style="margin:0 0 8px"><a class="btn sm" href="${esc(e.source)}" target="_blank" rel="noopener">Открыть рецепт на сайте ↗</a></p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
   <div class="grid2" style="margin-top:14px"><div class="field"><label for="edName">Название</label><input type="text" id="edName" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
   <div class="field"><label for="edServ">Порций</label><input type="number" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}></div></div>
   ${e.guess?`<p class="hint" id="servHint">В рецепте не сказано, на сколько порций. Посчитал по весу готового блюда: примерно ${trim(e.guess.grams/1000,1)} кг, это около ${e.servings} ${servWord(e.servings)} по ${e.guess.size} г. Если знаете точно, исправьте.</p>`:""}
@@ -1197,21 +1201,14 @@ async function callAI(prompt,signal,c=aiCfg(),images=[],web=false){
   }catch(e){if(e&&e.name==="AbortError")throw{code:"cancelled"};if(e&&e.code)throw e;throw{code:"network"}}
   return parseJSON(text);
 }
-function aiErr(e,images){const m=e.message||"";
-  if(e.code==="http"&&/country|region|territor|unsupported_country|not available in your/i.test(m))return "ИИ недоступен из вашей страны. Включите VPN и попробуйте ещё раз.";
-  if(e.code==="http"&&/api key|apikey|unauthor|invalid.*key|401/i.test(m))return "Ключ API не подошёл. Проверьте его в ⚙ Настройках.";
-  if(e.code==="http"&&/quota|billing|insufficient|balance|credit/i.test(m))return "На счёте ИИ закончились деньги или лимит. Пополните баланс у сервиса.";
-  if(e.code==="http"&&/web_search|tool|not supported/i.test(m))return "Эта модель не умеет искать в интернете. Выберите в ⚙ Настройках другую модель.";
-  if(images.length&&/image|vision|multimodal|изображ/i.test(m))return "Выбранная модель не умеет читать фото. Выберите в ⚙ модель, которая понимает изображения, или вставьте текст.";
-  if(e.code==="images_unavailable")return "Здесь фото не поддерживаются, вставьте текст рецепта.";
-  return ERRS[e.code]||("Не получилось: "+(m||e.code))}
 async function ask(area,prompt,images=[],web=false){
-  if(!navigator.onLine){setMsg(area,"Нет интернета. Подключитесь к сети и попробуйте ещё раз.",true);return null}
-  const wait=web?150:90;
-  UI.busy=area;UI.msg[area]={t:web?"Ищу рецепты в интернете, обычно 20–90 секунд…":"ИИ думает, обычно это 10–60 секунд…",err:false};render();
+  const NOCONN="Нет соединения с интернетом.";
+  if(!navigator.onLine){setMsg(area,NOCONN,true);return null}
+  const wait=web?30:90;
+  UI.busy=area;UI.msg[area]={t:web?"Ищу рецепты…":"ИИ думает, обычно это 10–60 секунд…",err:false};render();
   aiCtl=new AbortController();let late=false;const tm=setTimeout(()=>{late=true;aiCtl.abort()},wait*1000);
   try{const res=await callAI(prompt,aiCtl.signal,aiCfg(),images,web);UI.busy=null;UI.msg[area]={t:""};return res}
-  catch(e){UI.busy=null;if(late)setMsg(area,`ИИ не ответил за ${wait} секунд. Проверьте интернет и VPN и попробуйте ещё раз.`,true);else if(e.code==="cancelled")setMsg(area,"Остановлено.");else setMsg(area,aiErr(e,images),true);return null}
+  catch(e){UI.busy=null;if(e.code==="cancelled"&&!late)setMsg(area,"Остановлено.");else setMsg(area,NOCONN,true);return null}
   finally{clearTimeout(tm)}
 }
 async function parseAI(){
@@ -1521,7 +1518,8 @@ document.body.addEventListener("click",e=>{
     case "parseAI":parseAI();break;
     case "parseText":parseText();break;
     case "parsePhotos":parsePhotos();break;
-    case "webSearch":webSearch();break;
+    case "webSearch":webSearch(false);break;
+    case "webMore":webSearch(true);break;
     case "webTake":{const x=UI.webRes?.[+b.dataset.i];if(!x)return;const r=normRecipe(x,/^https?:\/\//.test(x.source||"")?x.source:"");r.note="Рецепт найден в интернете. Сверьте количества с сайтом по ссылке, если сомневаетесь.";openEditor(r,true);break}
     case "stopAI":aiCtl?.abort();break;
     case "parseLocal":parseLocal();break;
@@ -1633,7 +1631,7 @@ document.body.addEventListener("input",e=>{
   else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="qty"){const el=document.getElementById("ei-k-"+t.dataset.ei);if(el)el.textContent=nutLine(i)}if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;const x=document.getElementById("ei-x-"+t.dataset.ei);if(x&&!PIECES.includes(i.unit))x.hidden=!t.value.trim()||nutKnown(i);x?.querySelectorAll("[data-pk]").forEach(n=>{if(n.dataset.pk!=="gpp")n.value=""})}}
   else if(t.id==="impText")UI.impText=t.value;else if(t.id==="moWish")UI.menuOpts.wish=t.value;
 });
-document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exName")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch()}});
+document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exName")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
 boot();
 </script>
 
