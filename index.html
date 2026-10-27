@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=5d8ef4ee">
+<link rel="manifest" href="manifest.webmanifest?v=d188bfd1">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -182,6 +182,10 @@ button.qty{cursor:pointer}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;white-space:nowrap;border:0;border-radius:999px;padding:8px 13px;background:var(--fill);color:var(--ink);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
 .chip[aria-checked="true"]{background:var(--accent);color:var(--accent-ink)}
+.chip:focus,.chip:focus-visible,.pk:focus{outline:none}
+.addcard{margin-bottom:16px}
+.rinline{padding:4px 16px 18px;border-top:1px solid var(--line);background:var(--accent-soft)}
+.rinline .rhead>div:first-child{display:none}
 .rsec .gtitle{margin-top:14px}
 .actions.two .btn{flex:1 1 0;padding:12px 10px;white-space:nowrap}
 .picklist{margin:0 0 10px;max-height:52vh;overflow:auto}
@@ -765,7 +769,7 @@ function vWeek(){
   const n=entries(W).length;const np=entries(W).reduce((a,x)=>a+(+x.e.servings||0),0);
   const dish=x=>{const e=x.e;const r=rById(e.rid);if(!r)return"";
     return `<div class="dish"><span class="dn">${esc(r.name)}</span>
-     <span class="stepper"><button data-a="serv" data-id="${e.id}" data-d="-1" aria-label="Меньше порций"${e.servings<=1?" disabled":""}>−</button><span class="v">${servShort(e.servings)}</span><button data-a="serv" data-id="${e.id}" data-d="1" aria-label="Больше порций">+</button></span>
+     <span class="stepper"><button data-a="serv" data-id="${e.id}" data-d="-1" aria-label="${e.servings<=1?"Убрать блюдо из меню":"Меньше порций"}">−</button><span class="v">${servShort(e.servings)}</span><button data-a="serv" data-id="${e.id}" data-d="1" aria-label="Больше порций">+</button></span>
      <button class="chevb" data-a="dishMenu" data-id="${e.id}" aria-label="Перенести или убрать: ${esc(r.name)}">${ICON_CHEV}</button></div>`};
   return `<div class="sechead"><h1>Меню недели</h1><p class="sub">${n?`${n} ${dishWord(n)} · ${trim(np,1)} ${portWord(Math.ceil(np))}`:"Пока ничего не запланировано"}${normOf()?` · норма ${trim(normOf(),0)} ккал в день`:""}</p></div>
   ${n?`<div class="actions"><button class="btn danger" data-a="clearWeek">Очистить меню</button></div>`:""}
@@ -831,20 +835,21 @@ function vRecipes(){
   const sel=UI.sel&&rById(UI.sel);const N=S.recipes.length;const q=low(UI.recQ||"");const cur=UI.recCat&&S.recipes.some(r=>dishOf(r)===UI.recCat)?UI.recCat:"";
   const meta=r=>{const n=recipeNut(r);return `<span class="rmeta num"><span>${r.servings} ${servWord(r.servings)}</span><span>${trim(n.kcal,0)} ккал на 1 порцию</span></span>`};
   const row=(r,on)=>UI.pick?`<label class="ritem pickrow" data-s="${esc(low(r.name))}"${on?"":" hidden"}><input type="checkbox" data-pick="${esc(r.id)}"${UI.pick.includes(r.id)?" checked":""}><span class="t">${esc(r.name)}</span>${meta(r)}</label>`
-    :`<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"} aria-expanded="${UI.sel===r.id&&!UI.editor}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span>${meta(r)}${ICON_CHEV}</button>`;
+    :`<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"} aria-expanded="${UI.sel===r.id&&!UI.editor}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span>${meta(r)}${ICON_CHEV}</button>${UI.sel===r.id&&!UI.editor?`<div class="rinline" data-s="${esc(low(r.name))}"${on?"":" hidden"}>${vRecipe(r)}</div>`:""}`;
   const list=N?`<input type="text" enterkeyhint="search" id="recQ" class="searchf" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.recQ||"")}">
    ${catChips(S.recipes,cur,"recCat")}<div id="recList">${catSections(S.recipes,cur,q,row,"group")}</div><p class="muted small" id="recNone"${S.recipes.some(r=>(!cur||dishOf(r)===cur)&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`:"";
-  const right=UI.editor?vEditor():sel?vRecipe(sel):UI.pick?"":vImport();
+  const top=UI.editor?vEditor():!UI.pick&&(UI.adding||!N)?vImport():"";
   const word=N%10===1&&N%100!==11?"рецепт":[2,3,4].includes(N%10)&&![12,13,14].includes(N%100)?"рецепта":"рецептов";
   return `<div class="sechead"><h1>Рецепты</h1><p class="sub">${UI.pick?`Отметьте рецепты для удаления · выбрано ${UI.pick.length}`:N+" "+word}</p></div>
   ${!N?"":UI.pick?`<div class="actions two"><button class="btn danger" data-a="pickDel"${UI.pick.length?"":" disabled"}>Удалить${UI.pick.length?" ("+UI.pick.length+")":""}</button><button class="btn primary" data-a="pickDone">Готово</button></div>
    <div class="row" style="margin:-6px 0 12px"><button class="btn sm ghost" data-a="pickToggleAll">${UI.pick.length===N?"Снять отметки":"Отметить все"}</button></div>`
-   :`<div class="actions two"><button class="btn primary" data-a="newImport">+ Новый рецепт</button><button class="btn" data-a="pickStart">Удалить несколько</button></div>`}
-  <div class="recipes${N?"":" solo"}">${list?`<div>${list}</div>`:""}${right?`<div class="card">${right}</div>`:""}</div>`;
+   :`<div class="actions two"><button class="btn primary" data-a="newImport"${UI.adding||UI.editor?" disabled":""}>+ Новый рецепт</button><button class="btn" data-a="pickStart">Удалить несколько</button></div>`}
+  ${top?`<div class="card addcard">${top}</div>`:""}
+  <div class="recipes${N?"":" solo"}">${list?`<div>${list}</div>`:""}</div>`;
 }
 function vImport(){
   const ph=UI.photos||[];const busy=UI.busy==="import";
-  return `<div class="addhead"><h2>Добавить рецепт</h2><button class="btn sm" data-a="manual" aria-label="Заполнить рецепт вручную"><svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Вручную</button></div>
+  return `<div class="addhead"><h2>Новый рецепт</h2><button class="btn sm" data-a="manual" aria-label="Заполнить рецепт вручную"><svg class="pen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>Вручную</button>${S.recipes.length?`<button class="btn sm ghost" data-a="closeImport" aria-label="Закрыть">✕</button>`:""}</div>
   <div class="blk">
    <div class="lbl lblrow"><span>Фото рецепта</span><span class="aib" title="Фото распознаёт искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>распознаёт ИИ</span></div>
    ${ph.length?`<div class="photos">${ph.map((x,i)=>`<span class="ph"><img src="${x.dataUrl}" alt="Фото рецепта ${i+1}"><button data-a="rmPhoto" data-i="${i}" aria-label="Убрать фото">×</button></span>`).join("")}</div>`:""}
@@ -880,7 +885,7 @@ function vRecipe(r){
   const slotOpts=DAYS.map((d,di)=>MEALS.map(([m,ml])=>`<option value="${di}-${m}"${di+"-"+m===slot?" selected":""}>${d}, ${ml.toLowerCase()}</option>`).join("")).join("");
   const nAdd=UI.addServ||S.plan.people;
   const byCat={};r.ingredients.forEach(i=>{const c=CATS.includes(i.cat)?i.cat:"Другое";(byCat[c]=byCat[c]||[]).push(i)});
-  return `<div class="rhead"><div><h2>${esc(r.name)}</h2><p class="muted small" style="margin:4px 0 0">${(r.meals||[]).map(m=>MEAL_NAME[m]).join(", ")}${r.source?` · <a href="${esc(r.source)}" target="_blank" rel="noopener" style="color:var(--accent)">рецепт на сайте ↗</a>`:""}</p></div>
+  return `<div class="rhead"><div><h2>${esc(r.name)}</h2><p class="muted small" style="margin:4px 0 0">${esc(dishOf(r))}${r.source?` · <a href="${esc(r.source)}" target="_blank" rel="noopener" style="color:var(--accent)">рецепт на сайте ↗</a>`:""}</p></div>
    <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm" data-a="shareRecipe"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться</button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button><button class="btn sm" data-a="closeRecipe">Свернуть</button></div></div>
   <div class="nut"><span><b>≈ ${trim(nut.kcal,0)}</b> ккал на порцию</span><span>Б ${trim(nut.p,0)} г</span><span>Ж ${trim(nut.f,0)} г</span><span>У ${trim(nut.c,0)} г</span>${nut.miss.length?`<span class="muted">без учёта: ${esc(nut.miss.join(", "))}</span>`:""}</div>
   <div class="row" style="margin-top:16px;justify-content:space-between"><span class="muted">Пересчитать на</span><span class="stepper"><button data-a="scale" data-d="-1" aria-label="Меньше порций">−</button><span class="v" style="min-width:6.5em">${n} ${servWord(n)}</span><button data-a="scale" data-d="1" aria-label="Больше порций">+</button></span></div>
@@ -901,7 +906,6 @@ function vEditor(){
   <div class="grid2" style="margin-top:14px"><div class="field"><label for="edName">Название</label><input type="text" id="edName" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
   <div class="field"><label for="edServ">Порций</label><input type="number" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}></div></div>
   ${e.guess?`<p class="hint" id="servHint">В рецепте не сказано, на сколько порций. Посчитал по весу готового блюда: примерно ${trim(e.guess.grams/1000,1)} кг, это около ${e.servings} ${servWord(e.servings)} по ${e.guess.size} г. Если знаете точно, исправьте.</p>`:""}
-  <div class="field" style="margin-top:14px"><span>Подходит на</span><div class="checks">${MEALS.map(([m,ml])=>`<label><input type="checkbox" id="ed-m-${m}" data-edm="${m}" ${e.meals.includes(m)?"checked":""}>${ml}</label>`).join("")}</div></div>
   <div class="field" style="margin-top:14px"><label for="edDish">Раздел</label><select id="edDish">${[...new Set([...dishCats(),...(e.dish&&!e.dishNew?[e.dish]:[])])].map(c=>`<option${!e.dishNew&&c===(e.dish||guessDish(e.name))?" selected":""}>${esc(c)}</option>`).join("")}<option value="__new"${e.dishNew?" selected":""}>Свой раздел…</option></select>
    ${e.dishNew?`<input type="text" data-ed="dish" value="${esc(e.dish||"")}" placeholder="Название раздела, например Соусы" style="margin-top:8px" aria-label="Свой раздел">`:""}</div>
   <div class="lbl" style="margin-top:16px">Ингредиенты</div><p class="muted small" style="margin:0 0 8px">В каждой строке: продукт, сколько его нужно, единица и отдел магазина.</p>
@@ -967,14 +971,12 @@ function vSheet(){
      <div class="cta"><button class="btn danger" data-a="rmExtra" data-id="${esc(x.id)}">Удалить</button><button class="btn primary" data-a="extraSave" data-id="${esc(x.id)}">Сохранить</button></div>`;
   }
   if(s.t==="pick"){
-    const [d,m]=s.k.split("-");const fit=S.recipes.filter(r=>(r.meals||[]).includes(m));
-    const all=UI.pickAll||!fit.length;const q=low(UI.pickQ||"");
-    const list=(all?S.recipes:fit).slice().sort((a,b)=>(b.used||0)-(a.used||0)||a.name.localeCompare(b.name,"ru"));
+    const [d,m]=s.k.split("-");const q=low(UI.pickQ||"");
+    const list=S.recipes.slice().sort((a,b)=>(b.used||0)-(a.used||0)||a.name.localeCompare(b.name,"ru"));
     const cur=UI.pickCat&&list.some(r=>dishOf(r)===UI.pickCat)?UI.pickCat:"";
     const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
     return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.pickQ||"")}">
-     ${fit.length&&fit.length<S.recipes.length?`<div class="seg" style="margin-bottom:10px" role="radiogroup" aria-label="Какие рецепты показать"><button role="radio" aria-checked="${!all}" data-a="pickAll" data-v="">Для ${{b:"завтрака",l:"обеда",d:"ужина"}[m]} · ${fit.length}</button><button role="radio" aria-checked="${all}" data-a="pickAll" data-v="1">Все · ${S.recipes.length}</button></div>`:""}
      ${catChips(list,cur,"pickCat")}
      <div class="picklist" id="pickList">${catSections(list,cur,q,row,"sgroup")}</div>
      <p class="muted small" id="pickNone"${list.some(r=>(!cur||dishOf(r)===cur)&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
@@ -1354,18 +1356,19 @@ document.body.addEventListener("click",e=>{
     case "togglePlanner":UI.planner=!UI.planner;render();break;
     case "people":materialize();S.plan.people=Math.max(1,S.plan.people+ +b.dataset.d);savePlan();render();break;
     case "rmDish":materialize();rmEntry(W,b.dataset.id);UI.sheet=null;savePlan();render();break;
-    case "serv":{materialize();const x=findEntry(W,b.dataset.id);x.e.servings=Math.max(1,x.e.servings+ +b.dataset.d);savePlan();render();break}
+    case "serv":{materialize();const x=findEntry(W,b.dataset.id);if(+b.dataset.d<0&&x.e.servings<=1){undoable("Блюдо убрано из меню");rmEntry(W,x.e.id);savePlan();render();break}x.e.servings=Math.max(1,x.e.servings+ +b.dataset.d);savePlan();render();break}
     case "batch":{materialize();const x=findEntry(W,b.dataset.id);const k=(x.d+1)+"-"+x.m;(W[k]=W[k]||[]).push({id:uid(),rid:x.e.rid,servings:x.e.servings,of:x.e.id});savePlan();render();break}
     case "menuLocal":localMenu();break;
     case "menuAI":UI.menuOpts.wish=document.getElementById("moWish").value;menuAI();break;
     case "applyPreview":{materialize();const P=UI.preview;P.recipes.forEach(r=>{r.created=Date.now();S.recipes.push(r);saveRecipe(r)});
       S.plan.week=P.week;S.plan.checks={};UI.preview=null;UI.planner=false;savePlan();render();break}
     case "discardPreview":UI.preview=null;render();break;
-    case "openRecipe":if(UI.sel===b.dataset.id&&!UI.editor){UI.sel=null;render();break}UI.sel=b.dataset.id;UI.scale=null;UI.addServ=null;UI.editor=null;go("recipes");showDetail();break;
+    case "openRecipe":if(UI.sel===b.dataset.id&&!UI.editor){UI.sel=null;render();break}UI.sel=b.dataset.id;UI.scale=null;UI.addServ=null;UI.editor=null;go("recipes");{const el=document.querySelector(`.ritem[data-id="${CSS.escape(b.dataset.id)}"]`);if(el){const y=el.getBoundingClientRect().top;if(y<70||y>innerHeight*.6)scrollTo({top:y+scrollY-90,behavior:"smooth"})}}break;
     case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
     case "recCat":UI.recCat=b.dataset.v;render();break;
     case "pickCat":UI.pickCat=b.dataset.v;render();break;
-    case "newImport":UI.sel=null;UI.editor=null;render();showDetail();document.getElementById("impText")?.focus();break;
+    case "newImport":UI.sel=null;UI.editor=null;UI.adding=true;render();scrollTo({top:0});break;
+    case "closeImport":UI.adding=false;UI.photos=[];render();break;
     case "scale":{materialize();const r=rById(UI.sel);const ns=Math.max(1,r.servings+ +b.dataset.d);if(ns===r.servings)return;
       /* changing portions rescales the recipe itself, so the week sees the new count */
       const k=ns/r.servings;r.ingredients.forEach(i=>{if(i.qty!=null)i.qty=i.qty*k});r.servings=ns;UI.scale=null;
@@ -1383,13 +1386,12 @@ document.body.addEventListener("click",e=>{
     case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:2,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
     case "addRow":UI.editor.ingredients.push({name:"",qty:null,unit:"г",cat:"Другое",pantry:false});render();document.getElementById("ei-n-"+(UI.editor.ingredients.length-1))?.focus();break;
     case "rmRow":UI.editor.ingredients.splice(+b.dataset.i,1);render();break;
-    case "cancelEditor":UI.editor=null;render();break;
+    case "cancelEditor":UI.editor=null;UI.adding=false;render();break;
     case "saveEditor":{
       const ed=UI.editor;ed.ingredients=ed.ingredients.filter(i=>i.name.trim());
       const st=document.getElementById("edStatus");
       if(!ed.name.trim()){st.textContent="Укажите название блюда.";return}
       if(!ed.ingredients.length){st.textContent="Добавьте хотя бы один ингредиент.";return}
-      if(!ed.meals.length){st.textContent="Отметьте, на какой приём пищи подходит блюдо.";return}
       materialize();
       const r={id:ed.id,name:ed.name.trim(),dish:(ed.dish||"").trim()||guessDish(ed.name),servings:Math.max(1,Math.round(+ed.servings||1)),source:ed.source||"",meals:ed.meals,created:ed.created||Date.now(),
         ingredients:ed.ingredients.map(i=>{const d=lookup(i.name);return Object.assign({},i,{name:i.name.trim(),qty:i.unit==="по вкусу"||i.qty===""||i.qty==null?null:+i.qty,pantry:i.pantry??!!d?.pantry})})};
@@ -1398,7 +1400,7 @@ document.body.addEventListener("click",e=>{
         if(i.cat&&i.cat!=="Другое"&&(!L||L.cat!==i.cat))d.cat=i.cat;
         if(!L){if(i.per100)d.per100=i.per100;if(i.pack)d.pack=i.pack;if(i.gpp)d.gpp=i.gpp}
         if(Object.keys(d).length)learn(i.name,d)}
-      saveRecipe(r);if(ed.isNew){UI.impText="";UI.impUrl=""}UI.editor=null;UI.sel=null;UI.scale=null;render();scrollTo({top:0});break}
+      saveRecipe(r);if(ed.isNew){UI.impText="";UI.impUrl=""}UI.editor=null;UI.adding=false;UI.sel=null;UI.scale=null;render();scrollTo({top:0});break}
     case "home":{materialize();const k=b.dataset.key;const it=shoppingList().find(i=>i.key===k);const want=b.dataset.h!=="1";
       if(it&&want===it.pantry)delete S.plan.home[k];else S.plan.home[k]=want;savePlan();render();break}
     case "aiSave":{const c=UI.aiDraft;try{localStorage.setItem("kz-ai",JSON.stringify(c))}catch(e){}setMsg("ai","Сохранено.");break}
@@ -1415,8 +1417,7 @@ document.body.addEventListener("click",e=>{
     case "theme":try{localStorage.setItem("kz-theme",b.dataset.v)}catch(e){}applyTheme();applyPalette();render();break;
     case "rmPhoto":UI.photos.splice(+b.dataset.i,1);render();break;
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
-    case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickAll=false;UI.pickCat="";render();break;
-    case "pickAll":UI.pickAll=!!b.dataset.v;render();break;
+    case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
       materialize();(S.plan.week[k]=S.plan.week[k]||[]).push({id:uid(),rid:r.id,servings:sv});r.used=Date.now();saveRecipe(r);UI.sheet=null;savePlan();render();break}
     case "pickStart":UI.pick=[];UI.sel=null;UI.editor=null;render();break;
