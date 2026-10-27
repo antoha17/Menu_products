@@ -2,4 +2,4 @@
 
 Планировщик меню на неделю и список покупок. Работает в браузере, данные хранятся только на устройстве.
 
-Открыть: https://antoha17.github.io/menu_products/
+Открыть: https://antoha17.github.io/Menu_products/
