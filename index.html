@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=403d7fff">
+<link rel="manifest" href="manifest.webmanifest?v=7089e226">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -173,7 +173,9 @@ button.qty{cursor:pointer}
 @media (min-width:900px){.recipes{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start}.recipes.solo{grid-template-columns:minmax(0,720px)}}
 .ritem{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:12px 12px 12px 16px;cursor:pointer;position:relative;color:var(--ink)}
 .ritem+.ritem::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line)}
-.ritem[aria-current="true"]{background:var(--open-fill,var(--accent-soft))}
+/* the open recipe's title row is a shade deeper than its body, whatever fill strength is set */
+.ritem[aria-current="true"]{background:linear-gradient(var(--open-fill,var(--accent-soft)),var(--open-fill,var(--accent-soft))),linear-gradient(var(--open-fill,var(--accent-soft)),var(--open-fill,var(--accent-soft))),var(--fill)}
+.ritem[aria-current="true"] .t{font-weight:600}
 .ritem .t{font-weight:500;overflow-wrap:break-word}
 .pickrow{grid-template-columns:auto minmax(0,1fr) auto}
 .pickrow input{width:22px;height:22px;margin:0;accent-color:var(--accent)}
