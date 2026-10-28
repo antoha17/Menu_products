@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=b2480dc8">
+<link rel="manifest" href="manifest.webmanifest?v=152ef8a8">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -268,7 +268,6 @@ button.add-dish{text-align:left;cursor:pointer}
 .ings li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
 .ings li:first-child{border-top:0}
 .ings li .q{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
-.ings li.pantry .n::after{content:"обычно есть дома";display:block;font-size:12px;color:var(--muted);margin-top:1px}
 .cat h3{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin:22px 4px 8px}
 .lblrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-right:0}
 .aib{display:inline-flex;align-items:center;gap:4px;text-transform:none;letter-spacing:0;font-weight:600;font-size:12px;color:var(--accent);background:var(--accent-soft);padding:3px 9px 3px 7px;border-radius:999px}
@@ -1045,7 +1044,7 @@ function vRecipe(r){
    <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm" data-a="shareRecipe"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться</button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button><button class="btn sm" data-a="closeRecipe">Свернуть</button></div></div>
   <div class="nut"><span><b>≈ ${trim(nut.kcal,0)}</b> ккал на порцию</span><span>Б ${trim(nut.p,0)} г</span><span>Ж ${trim(nut.f,0)} г</span><span>У ${trim(nut.c,0)} г</span>${nut.miss.length?`<span class="muted">без учёта: ${esc(nut.miss.join(", "))} — калорийность можно вписать в «Изменить»</span>`:""}</div>
   <div class="row" style="margin-top:16px;justify-content:space-between"><span class="muted">Пересчитать на</span><span class="stepper"><button data-a="scale" data-d="-1" aria-label="Меньше порций">−</button><span class="v" style="min-width:6.5em">${n} ${servWord(n)}</span><button data-a="scale" data-d="1" aria-label="Больше порций">+</button></span></div>
-  ${CATS.filter(c=>byCat[c]).map(c=>`<div class="cat"><h3>${c}</h3><ul class="ings">${byCat[c].map(i=>`<li class="${i.pantry?"pantry":""}"><span class="n">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}</span></li>`).join("")}</ul></div>`).join("")}
+  <ul class="ings" style="margin-top:16px">${CATS.filter(c=>byCat[c]).flatMap(c=>byCat[c]).map(i=>`<li><span class="n">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}</span></li>`).join("")}</ul>
   <div class="row" style="margin-top:10px"><span class="copied" id="copiedR"></span></div>
   <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
    ${inMenu?`<p class="muted small" style="margin:0 0 10px">Уже в меню: ${trim(inMenu,1)} порц.</p>`:""}
