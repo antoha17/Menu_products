@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=152ef8a8">
+<link rel="manifest" href="manifest.webmanifest?v=8ded7b11">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -224,6 +224,10 @@ button.qty{cursor:pointer}
 .nsum>span{flex:1;min-width:0}
 .nsum .nwarn{color:var(--warn)}
 .nsum .nsrc{display:block;font-size:11px;opacity:.8}
+.ingb{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:0;border:0;background:transparent;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.ingb .q{display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+.ingb .q svg{width:13px;height:13px}
+.ingb .nwarn{color:var(--warn)}
 .nb{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--ink);display:grid;place-items:center;cursor:pointer}
 .nb svg{width:19px;height:19px}
 .nfields{flex:1 1 100%;display:flex;gap:6px}
@@ -610,6 +614,15 @@ function materialize(){
   isExample=false;
   if(store.mode==="db"){S.recipes.forEach(saveRecipe);savePlan()}else localSave();
 }
+/* one line per product: repeats of "по вкусу" collapse, "по вкусу" yields to a real amount, same units add up */
+function dedupeIngs(list){const out=[];
+  for(const i of list){const k=low((i.name||"").trim());const same=out.filter(o=>low((o.name||"").trim())===k);const taste=i.unit==="по вкусу"||i.qty==null;
+    if(!same.length){out.push(i);continue}
+    if(taste)continue;
+    const t=same.find(o=>o.unit==="по вкусу"||o.qty==null);if(t){Object.assign(t,i);continue}
+    const u=same.find(o=>o.unit===i.unit);if(u){u.qty=(+u.qty||0)+(+i.qty||0);continue}
+    out.push(i)}
+  return out}
 function migrate(){
   S.plan=Object.assign(emptyPlan(),S.plan||{});
   S.plan.removed=S.plan.removed||{};
@@ -617,7 +630,7 @@ function migrate(){
   const ids=new Set();
   for(const l of Object.values(S.plan.week))for(const e of l){if(!e.id)e.id=uid();ids.add(e.id)}
   for(const l of Object.values(S.plan.week))for(const e of l)delete e.of;
-  S.recipes.forEach(r=>{if(!r.meals||!r.meals.length)r.meals=guessMeals(r.name)});
+  S.recipes.forEach(r=>{if(!r.meals||!r.meals.length)r.meals=guessMeals(r.name);if(Array.isArray(r.ingredients))r.ingredients=dedupeIngs(r.ingredients)});
 }
 async function boot(){
   /* examples only on the very first launch; an emptied book stays empty */
@@ -1042,9 +1055,9 @@ function vRecipe(r){
   const byCat={};r.ingredients.forEach(i=>{const c=CATS.includes(i.cat)?i.cat:"Другое";(byCat[c]=byCat[c]||[]).push(i)});
   return `<div class="rhead"><div><h2>${esc(r.name)}</h2><p class="muted small" style="margin:4px 0 0">${r.source?`<a href="${esc(r.source)}" target="_blank" rel="noopener" style="color:var(--accent)">рецепт на сайте ↗</a>`:""}</p></div>
    <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm" data-a="shareRecipe"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться</button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button><button class="btn sm" data-a="closeRecipe">Свернуть</button></div></div>
-  <div class="nut"><span><b>≈ ${trim(nut.kcal,0)}</b> ккал на порцию</span><span>Б ${trim(nut.p,0)} г</span><span>Ж ${trim(nut.f,0)} г</span><span>У ${trim(nut.c,0)} г</span>${nut.miss.length?`<span class="muted">без учёта: ${esc(nut.miss.join(", "))} — калорийность можно вписать в «Изменить»</span>`:""}</div>
+  <div class="nut"><span><b>≈ ${trim(nut.kcal,0)}</b> ккал на порцию</span><span>Б ${trim(nut.p,0)} г</span><span>Ж ${trim(nut.f,0)} г</span><span>У ${trim(nut.c,0)} г</span>${nut.miss.length?`<span class="muted">без учёта: ${esc(nut.miss.join(", "))} — калорийность можно изменить</span>`:""}</div>
   <div class="row" style="margin-top:16px;justify-content:space-between"><span class="muted">Пересчитать на</span><span class="stepper"><button data-a="scale" data-d="-1" aria-label="Меньше порций">−</button><span class="v" style="min-width:6.5em">${n} ${servWord(n)}</span><button data-a="scale" data-d="1" aria-label="Больше порций">+</button></span></div>
-  <ul class="ings" style="margin-top:16px">${CATS.filter(c=>byCat[c]).flatMap(c=>byCat[c]).map(i=>`<li><span class="n">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}</span></li>`).join("")}</ul>
+  <ul class="ings" style="margin-top:16px">${r.ingredients.map((i,ix)=>[i,ix]).sort((a,b)=>CATS.indexOf(CATS.includes(a[0].cat)?a[0].cat:"Другое")-CATS.indexOf(CATS.includes(b[0].cat)?b[0].cat:"Другое")).map(([i,ix])=>`<li><button class="ingb" data-a="ingOpen" data-id="${esc(r.id)}" data-i="${ix}"><span class="n${i.unit!=="по вкусу"&&!perShown(i)?" nwarn":""}">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}${ICON_CHEV}</span></button></li>`).join("")}</ul>
   <div class="row" style="margin-top:10px"><span class="copied" id="copiedR"></span></div>
   <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
    ${inMenu?`<p class="muted small" style="margin:0 0 10px">Уже в меню: ${trim(inMenu,1)} порц.</p>`:""}
@@ -1064,7 +1077,7 @@ const ICON_PEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 const ICON_CAM='<svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
 /* every ingredient shows its calories per 100 g; ✎ opens the four fields, the barcode button fills them from the package */
 function nutInner(i,ix){const pc=PIECES.includes(i.unit)&&!gppOf(i);const P=perShown(i);const open=!P||UI.editor?.nutOpen?.[ix];
-  const v=k=>P&&P[k]!=null?trim(P[k],1):"";
+  const v=k=>P&&P[k]!=null?String(Math.round(P[k]*10)/10):"";
   return `<div class="nsum"><span class="${P?"":"nwarn"}">${P?`${trim(P.kcal,0)} ккал · Б ${trim(P.p,1)} · Ж ${trim(P.f,1)} · У ${trim(P.c,1)} на 100 г`:"Нет данных о калорийности, на 100 г:"}${i.nutSrc?`<small class="nsrc">${esc(i.nutSrc)}</small>`:""}</span>
    ${P&&!open?`<button class="nb" data-a="nutEdit" data-i="${ix}" aria-label="Изменить калорийность">${ICON_PEN}</button>`:""}<button class="nb" data-a="scanOpen" data-i="${ix}" aria-label="Сканировать штрихкод">${ICON_SCAN}</button></div>
    ${open?`<div class="nfields">${[["kcal","ккал"],["p","белки"],["f","жиры"],["c","углев."]].map(([k,l])=>`<label><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="${k}" value="${v(k)}" placeholder="0"><small>${l}</small></label>`).join("")}</div>`:""}
@@ -1170,7 +1183,15 @@ function vSheet(){
      <div class="sgroup sharel"><button data-a="shareShop"><span>Отправить</span><span>в мессенджер, заметки…</span></button>
      <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для поиска товаров</span></button></div>`;
   }
-  if(s.t==="scan"){const i=UI.editor?.ingredients[s.ix];const st=s.st||"cam";
+  if(s.t==="ing"){const r=rById(s.rid),i=r?.ingredients[s.ix];if(!i)return"";const d=UI.ingDraft||{};const g=ingGrams(i,1);
+    return `<h3>${esc(i.name)}</h3><p class="need">${esc(fmtIng(i,1))} в рецепте${g&&d.kcal?` · ≈ ${trim(d.kcal*g/100,0)} ккал`:""}</p>
+     <div class="lbl">На 100 г, как на упаковке</div>
+     <div class="nfields">${[["kcal","ккал"],["p","белки"],["f","жиры"],["c","углев."]].map(([k,l])=>`<label><input type="number" inputmode="decimal" step="any" min="0" data-ik="${k}" value="${d[k]!=null&&d[k]!==""?String(Math.round(d[k]*10)/10):""}" placeholder="0"><small>${l}</small></label>`).join("")}</div>
+     ${d.src?`<p class="muted small" style="margin:6px 0 0">${esc(d.src)}</p>`:""}
+     <button class="btn wide" style="margin-top:12px" data-a="scanOpenR">${ICON_SCAN.replace("<svg ",'<svg class="shi" ')}Сканировать штрихкод</button>
+     <div class="cta"><button class="btn" data-a="closeSheet">Отмена</button><button class="btn primary" data-a="ingSave">Сохранить</button></div>`;
+  }
+  if(s.t==="scan"){const i=s.rid?rById(s.rid)?.ingredients[s.ix]:UI.editor?.ingredients[s.ix];const st=s.st||"cam";
     return `<h3>Калорийность</h3><p class="need">${esc(i?.name||"")}</p>
      ${st==="cam"?`<div class="scanbox"><video id="scanV" playsinline muted autoplay></video><div class="scanframe"></div></div><p class="muted small" id="scanSt" style="text-align:center">Наведите камеру на штрихкод</p>`:""}
      ${st==="notfound"?`<p class="hint">${esc(s.why||"Этого товара нет в базе. Сфотографируйте таблицу пищевой ценности на упаковке или введите вручную.")}</p>`:""}
@@ -1220,7 +1241,8 @@ function normRecipe(x,src){
   const r={id:uid(),name:String(x.name||"Новый рецепт").trim(),dish:DISH_CATS.includes(x.dish)?x.dish:"",servings:stated?Math.round(+x.servings):1,source:src||"",
     meals:(Array.isArray(x.meals)?x.meals:[]).filter(m=>MEAL_NAME[m]).length?x.meals.filter(m=>MEAL_NAME[m]):guessMeals(x.name||""),
     ingredients:(x.ingredients||[]).map(i=>({name:String(i.name||"").trim(),qty:i.qty==null?null:+i.qty,unit:normUnit(i.unit,i.qty),cat:CATS.includes(i.cat)?i.cat:"Другое",pantry:!!i.pantry,
-      pack:i.pack&&+i.pack.size>0?{size:+i.pack.size,unit:normUnit(i.pack.unit,1),name:String(i.pack.name||"упаковка")}:null,per100:per(i.per100),gpp:+i.gpp>0?+i.gpp:null})).filter(i=>i.name)};
+      pack:i.pack&&+i.pack.size>0?{size:+i.pack.size,unit:normUnit(i.pack.unit,1),name:String(i.pack.name||"упаковка")}:null,per100:per(i.per100),gpp:+i.gpp>0?+i.gpp:null})).filter(i=>i.name)}
+  r.ingredients=dedupeIngs(r.ingredients);;
   if(!stated)Object.assign(r,guessServings(r));
   return r;
 }
@@ -1375,7 +1397,9 @@ async function lookupBarcode(code,ix){
     if(j.status!==1||kcal==null||!isFinite(kcal)){scanState("notfound");return}
     applyNut(ix,{kcal,p:+n.proteins_100g||0,f:+n.fat_100g||0,c:+n.carbohydrates_100g||0},[j.product.brands,j.product.product_name].filter(Boolean).join(" ").slice(0,60))
   }catch(e){scanState("notfound","Нет соединения с интернетом.")}}
-function applyNut(ix,per,src){const e=UI.editor,i=e?.ingredients[ix];if(!i)return;
+function applyNut(ix,per,src){
+  if(UI.sheet?.rid){UI.ingDraft={kcal:Math.round(+per.kcal||0),p:+(+per.p||0).toFixed(1),f:+(+per.f||0).toFixed(1),c:+(+per.c||0).toFixed(1),src:src||""};UI.sheet={t:"ing",rid:UI.sheet.rid,ix};render();return}
+  const e=UI.editor,i=e?.ingredients[ix];if(!i)return;
   const r1=x=>Math.round((+x||0)*10)/10;i.per100={kcal:r1(per.kcal),p:r1(per.p),f:r1(per.f),c:r1(per.c)};i.nutSet=true;if(src)i.nutSrc=src;else delete i.nutSrc;
   e.nutOpen=Object.assign({},e.nutOpen,{[ix]:false});UI.sheet=null;render()}
 async function scanPhoto(file){const ix=UI.sheet?.ix;stopScan();let img;try{img=await shrink(file)}catch(e){setMsg("scan","Не получилось открыть фото.",true);return}
@@ -1666,7 +1690,7 @@ document.body.addEventListener("click",e=>{
       if(!ings.length){st.textContent="Добавьте хотя бы один ингредиент.";return}
       materialize();
       const r={id:ed.id,name:ed.name.trim(),dish:(ed.dish||"").trim()||guessDish(ed.name),servings:Math.max(1,Math.round(+ed.servings||1)),source:ed.source||"",meals:ed.meals,created:ed.created||Date.now(),
-        ingredients:ings.map(i=>{const d=lookup(i.name);return Object.assign({},i,{name:i.name.trim(),qty:i.unit==="по вкусу"||i.qty===""||i.qty==null?null:+i.qty,pantry:i.pantry??!!d?.pantry})})};
+        ingredients:dedupeIngs(ings.map(i=>Object.assign({},i))).map(i=>{const d=lookup(i.name);return Object.assign({},i,{name:i.name.trim(),qty:i.unit==="по вкусу"||i.qty===""||i.qty==null?null:+i.qty,pantry:i.pantry??!!d?.pantry})})};
       const ix=S.recipes.findIndex(x=>x.id===r.id);if(ix>=0)S.recipes[ix]=r;else S.recipes.push(r);
       for(const i of r.ingredients){const L=lookup(i.name);const d={};
         if(i.cat&&i.cat!=="Другое"&&(!L||L.cat!==i.cat))d.cat=i.cat;
@@ -1689,8 +1713,13 @@ document.body.addEventListener("click",e=>{
     case "theme":try{localStorage.setItem("kz-theme",b.dataset.v)}catch(e){}applyTheme();applyPalette();render();break;
     case "rmPhoto":UI.photos.splice(+b.dataset.i,1);render();break;
     case "nutEdit":{const e=UI.editor;if(!e)return;e.nutOpen=Object.assign({},e.nutOpen,{[b.dataset.i]:true});render();break}
+    case "ingOpen":{const r=rById(b.dataset.id),i=r?.ingredients[+b.dataset.i];if(!i)return;const P=perShown(i);UI.ingDraft=P?{kcal:P.kcal,p:P.p,f:P.f,c:P.c,src:i.nutSrc||""}:{};UI.sheet={t:"ing",rid:r.id,ix:+b.dataset.i};render();break}
+    case "scanOpenR":{const s0=UI.sheet;UI.msg.scan={t:""};UI.sheet={t:"scan",ix:s0.ix,rid:s0.rid,st:"cam"};render();startScan();break}
+    case "ingSave":{const s0=UI.sheet,r=rById(s0?.rid),i=r?.ingredients[s0.ix];if(!i)return;const d=UI.ingDraft||{};materialize();
+      if([d.kcal,d.p,d.f,d.c].some(v=>v!=null&&v!=="")){i.per100={kcal:+d.kcal||0,p:+d.p||0,f:+d.f||0,c:+d.c||0};i.nutSet=true;if(d.src)i.nutSrc=d.src;else delete i.nutSrc;learn(i.name,{per100:i.per100})}
+      saveRecipe(r);UI.sheet=null;render();break}
     case "scanOpen":UI.msg.scan={t:""};UI.sheet={t:"scan",ix:+b.dataset.i,st:"cam"};render();startScan();break;
-    case "scanManual":{const ix=UI.sheet?.ix;UI.sheet=null;if(UI.editor)UI.editor.nutOpen=Object.assign({},UI.editor.nutOpen,{[ix]:true});render();break}
+    case "scanManual":{const ix=UI.sheet?.ix;if(UI.sheet?.rid){UI.sheet={t:"ing",rid:UI.sheet.rid,ix};render();break}UI.sheet=null;if(UI.editor)UI.editor.nutOpen=Object.assign({},UI.editor.nutOpen,{[ix]:true});render();break}
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -1737,6 +1766,7 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.pick){const id=t.dataset.pick;UI.pick=t.checked?[...UI.pick,id]:UI.pick.filter(x=>x!==id);render();return}
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
   if(t.id==="scanPhoto"&&t.files.length){scanPhoto(t.files[0]);return}
+  if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src}
   if(t.id==="impPhoto"&&t.files.length){UI.impText=document.getElementById("impText").value;addPhotos([...t.files]);return}
   if(t.dataset.move&&t.value){materialize();const W=S.plan.week;const x=findEntry(W,t.dataset.move);if(!x)return;
     W[x.k].splice(x.i,1);if(!W[x.k].length)delete W[x.k];(W[t.value]=W[t.value]||[]).push(x.e);UI.dishMenu=null;UI.sheet=null;savePlan();render();return}
@@ -1760,6 +1790,7 @@ document.addEventListener("focusout",e=>{if(e.target.matches?.("input,textarea,s
 if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height})}
 document.body.addEventListener("input",e=>{
   const t=e.target;
+  if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src;return}
   if(t.id==="pickQ"){UI.pickQ=t.value;document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0;return}
   if(t.id==="recQ"){UI.recQ=t.value;document.getElementById("recNone").hidden=filterRows(document.getElementById("recList"),t.value)>0;return}
   if(t.id==="accHue"){setAcc(Object.assign(getAcc(),{h:+t.value}));return}
