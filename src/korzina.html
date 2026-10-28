@@ -40,7 +40,7 @@ body{min-height:100vh;min-height:100lvh}
 .glass{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
   border:1px solid var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-hi),0 10px 30px var(--shadow)}
 
-.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(120px + env(safe-area-inset-bottom,0px))}
+.wrap{position:relative;z-index:1;margin-bottom:var(--kb,0px);max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(120px + env(safe-area-inset-bottom,0px))}
 .wrap.wide{max-width:1120px}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin:0 -16px;padding:16px 16px 8px;border-radius:0 0 18px 18px;border-top:0;transition:background .2s,box-shadow .2s,border-color .2s}
 .topbar:not(.on){background:transparent;box-shadow:none;border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
@@ -1104,7 +1104,7 @@ function vEditor(){
 
 /* ---------- Shopping ---------- */
 function extraCard(){return `<div class="gtitle">Свой товар</div>
-  <div class="card"><div class="addrow"><input type="text" id="exName" placeholder="Хлеб 2 литра молока кофе" aria-label="Что добавить" autocomplete="off"><button class="btn primary" data-a="addExtra">Добавить</button></div>
+  <div class="card"><div class="addrow"><input type="text" id="exItem" name="item" autocomplete="off" autocorrect="on" placeholder="Хлеб 2 литра молока кофе" aria-label="Что добавить" autocomplete="off"><button class="btn primary" data-a="addExtra">Добавить</button></div>
    <p class="muted small" style="margin:8px 2px 0">Можно сразу несколько товаров, количество — по желанию. Удобно надиктовать: нажмите <svg class="mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg> на клавиатуре iPhone.</p></div>`
 }
 function homeCard(home){if(!home.length)return"";
@@ -1753,7 +1753,7 @@ document.body.addEventListener("click",e=>{
     case "shareMenu":UI.sheet={t:"share"};render();break;
     case "shareShop":UI.sheet=null;render();share(shopText(),"Список покупок","copiedS");break;
     case "resetChecks":S.plan.checks={};savePlan();render();break;
-    case "addExtra":{const n=document.getElementById("exName").value.trim();if(!n)return;materialize();parseExtras(n).forEach(x=>S.plan.extras.push({id:uid(),...x}));savePlan();render();break}
+    case "addExtra":{const n=document.getElementById("exItem").value.trim();if(!n)return;materialize();parseExtras(n).forEach(x=>S.plan.extras.push({id:uid(),...x}));savePlan();render();break}
     case "rmExtra":S.plan.extras=S.plan.extras.filter(x=>x.id!==b.dataset.id);UI.sheet=null;savePlan();render();break;
     case "extraSheet":UI.sheet={t:"extra",id:b.dataset.id};render();break;
     case "extraSave":{const x=S.plan.extras.find(e=>e.id===b.dataset.id);if(!x)return;materialize();
@@ -1794,7 +1794,16 @@ document.addEventListener("touchend",()=>{if(!swp)return;const {it,dx,on}=swp;sw
    a 1px scroll nudge makes Safari recompute the viewport */
 function fixViewport(){setTimeout(()=>{const y=scrollY;scrollTo(scrollX,y+1);scrollTo(scrollX,y)},60)}
 document.addEventListener("focusout",e=>{if(e.target.matches?.("input,textarea,select"))fixViewport()});
-if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height})}
+if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height;keepVisible()})}
+/* the keyboard never covers the field being typed in: the page gets extra room at the bottom
+   while the keyboard is up, and the field's card is scrolled just above the keyboard */
+function keepVisible(){const vv=window.visualViewport,el=document.activeElement;
+  const kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;document.documentElement.style.setProperty("--kb",kb+"px");
+  if(!vv||!el||!el.matches?.("input:not([type=checkbox]):not([type=range]):not([type=file]),textarea")||el.closest(".sheet"))return;
+  const box=(el.closest(".card")&&el.closest(".card").offsetHeight<vv.height*.6?el.closest(".card"):el).getBoundingClientRect();
+  const bottom=vv.offsetTop+vv.height-12,top=vv.offsetTop+80;
+  if(box.bottom>bottom)scrollBy({top:Math.min(box.bottom-bottom,box.top-top),behavior:"smooth"})}
+document.addEventListener("focusin",e=>{if(e.target.matches?.("input,textarea"))[150,450].forEach(ms=>setTimeout(keepVisible,ms))});
 document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src;return}
@@ -1812,6 +1821,6 @@ document.body.addEventListener("input",e=>{
     if(!i.catSet){const c=lookup(t.value)?.cat;const sel=document.getElementById("ei-c-"+t.dataset.ei);const cc=c&&CATS.includes(c)?c:"Другое";i.cat=cc;if(sel)sel.value=cc}const x=document.getElementById("ei-x-"+t.dataset.ei);if(x){x.hidden=!t.value.trim();x.innerHTML=nutInner(i,+t.dataset.ei)}}}
   else if(t.id==="impText")UI.impText=t.value;else if(t.id==="moWish")UI.menuOpts.wish=t.value;
 });
-document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exName")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
+document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exItem")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
 boot();
 </script>
