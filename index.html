@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=745b2e98">
+<link rel="manifest" href="manifest.webmanifest?v=b64c5028">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1626,7 +1626,7 @@ document.body.addEventListener("click",e=>{
     case "packCancel":UI.packEdit=null;render();break;
     case "packSave":{const size=+document.getElementById("pk-size").value;if(!(size>0))return;materialize();delete S.plan.packs[b.dataset.g];learn(b.dataset.nm,{pack:{size,unit:b.dataset.u,name:b.dataset.n}});UI.packEdit=null;UI.sheet=null;savePlan();render();break}
     case "packNone":materialize();S.plan.packs[b.dataset.g]={none:true};UI.packEdit=null;savePlan();render();break;
-    case "copyLavka":{const t=lavkaText();copy(t,"copiedS").then(()=>{const el=document.getElementById("copiedS");if(el&&el.textContent==="Скопировано"){const n=t.split("\n").length;el.textContent=`Скопировано ${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}. В Яндекс Лавке: корзина → вставить список`;clearTimeout(UI.cpT);UI.cpT=setTimeout(()=>{if(el.isConnected)el.textContent=""},5000)}});break}
+    case "copyLavka":{const t=lavkaText();copy(t,"copiedS").then(()=>{const el=document.getElementById("copiedS");if(el&&el.textContent==="Скопировано"){const n=t.split("\n").length;el.textContent=`Скопировано ${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}`;clearTimeout(UI.cpT);UI.cpT=setTimeout(()=>{if(el.isConnected)el.textContent=""},5000)}});break}
     case "shareShop":share(shopText(),"Список покупок","copiedS");break;
     case "resetChecks":S.plan.checks={};savePlan();render();break;
     case "addExtra":{const n=document.getElementById("exName").value.trim();if(!n)return;materialize();parseExtras(n).forEach(x=>S.plan.extras.push({id:uid(),...x}));savePlan();render();break}
