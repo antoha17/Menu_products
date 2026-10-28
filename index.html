@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=8ded7b11">
+<link rel="manifest" href="manifest.webmanifest?v=c9ce24e9">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1647,7 +1647,11 @@ document.body.addEventListener("click",e=>{
     case "applyPreview":{materialize();const P=UI.preview;P.recipes.forEach(r=>{r.created=Date.now();S.recipes.push(r);saveRecipe(r)});
       S.plan.week=P.week;S.plan.checks={};UI.preview=null;UI.planner=false;savePlan();render();break}
     case "discardPreview":UI.preview=null;render();break;
-    case "openRecipe":if(UI.sel===b.dataset.id&&!UI.editor){UI.sel=null;render();break}UI.sel=b.dataset.id;UI.scale=null;UI.addServ=null;UI.slots=[];UI.editor=null;go("recipes");{const el=document.querySelector(`.ritem[data-id="${CSS.escape(b.dataset.id)}"]`);if(el){const y=el.getBoundingClientRect().top;if(y<70||y>innerHeight*.6)scrollTo({top:y+scrollY-90,behavior:"smooth"})}}break;
+    case "openRecipe":{const id=b.dataset.id,q=()=>document.querySelector(`.ritem[data-id="${CSS.escape(id)}"]`);
+      /* the tapped row stays exactly where it was on screen; the recipe opens below it */
+      const y0=q()?.getBoundingClientRect().top;
+      if(UI.sel===id&&!UI.editor)UI.sel=null;else{UI.sel=id;UI.scale=null;UI.addServ=null;UI.slots=[];UI.editor=null}
+      render();const el=q();if(el&&y0!=null)scrollBy(0,el.getBoundingClientRect().top-y0);break}
     case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
     case "recCat":UI.recCat=b.dataset.v;render();break;
     case "pickCat":UI.pickCat=b.dataset.v;render();break;
