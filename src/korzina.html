@@ -627,7 +627,7 @@ function migrate(){
   const ids=new Set();
   for(const l of Object.values(S.plan.week))for(const e of l){if(!e.id)e.id=uid();ids.add(e.id)}
   for(const l of Object.values(S.plan.week))for(const e of l)delete e.of;
-  S.recipes.forEach(r=>{if(!r.meals||!r.meals.length)r.meals=guessMeals(r.name);if(Array.isArray(r.ingredients))r.ingredients=dedupeIngs(r.ingredients)});
+  S.recipes.forEach(r=>{if(!r.meals||!r.meals.length)r.meals=guessMeals(r.name);if(Array.isArray(r.ingredients))r.ingredients=dedupeIngs(r.ingredients);if(["Яйца и творог","Каши"].includes(r.dish))r.dish=""});
 }
 async function boot(){
   /* examples only on the very first launch; an emptied book stays empty */
