@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=2f33f6b4">
+<link rel="manifest" href="manifest.webmanifest?v=f416fde2">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -220,6 +220,19 @@ button.qty{cursor:pointer}
 .homecard{scroll-margin-top:90px;margin-top:22px;padding:12px;border-radius:calc(var(--r) + 6px);background:var(--accent-soft);border:0}
 .homecard .hh{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:700;color:var(--accent);margin:2px 4px 10px}
 .homecard .hh svg{width:20px;height:20px}
+.nsum{flex:1 1 100%;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.nsum>span{flex:1;min-width:0}
+.nsum .nwarn{color:var(--warn)}
+.nsum .nsrc{display:block;font-size:11px;opacity:.8}
+.nb{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.nb svg{width:19px;height:19px}
+.nfields{flex:1 1 100%;display:flex;gap:6px}
+.nfields label{display:flex;flex-direction:column;gap:2px;flex:1 1 0;min-width:0}
+.nfields input{width:100%;box-sizing:border-box;padding:8px 10px}
+.nfields small{font-size:11px;color:var(--muted);text-align:center}
+.scanbox{position:relative;margin-top:12px;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3}
+.scanbox video{width:100%;height:100%;object-fit:cover;display:block}
+.scanframe{position:absolute;left:12%;right:12%;top:30%;bottom:30%;border:2.5px solid rgba(255,255,255,.9);border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
 .enut{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:flex-end;gap:6px;margin-top:2px}
 .enut .et{flex:1 1 100%;font-size:13px;color:var(--warn)}
 .enut label{display:flex;flex-direction:column;gap:2px;flex:1 1 60px;min-width:56px}
@@ -865,7 +878,8 @@ function render(){
   if(banner){const a=html.indexOf("</div>",html.indexOf('class="sechead"'))+6;html=html.slice(0,a)+banner+html.slice(a)}
   app.innerHTML=html;
   const sh=vSheet();
-  document.getElementById("sheetBody").innerHTML=sh;
+  if(scanR&&UI.sheet?.t!=="scan")stopScan();
+  if(sh!==UI.lastSh){document.getElementById("sheetBody").innerHTML=sh;UI.lastSh=sh}
   sheetEl.classList.toggle("on",!!sh);scrimEl.classList.toggle("on",!!sh);document.documentElement.classList.toggle("sheet-open",!!sh);
   if(!sh)UI.sheet=null;
   let toast=document.getElementById("toast");
@@ -1044,13 +1058,20 @@ function vRecipe(r){
   </div>`;
 }
 /* products missing from the built-in table get a small "per 100 g" line; what is typed there is remembered for next time */
-function nutKnown(i){return !i.per100&&!!lookup(i.name||"")?.per100}
-function nutLine(i){const g=ingGrams(i,1);const k=i.per100?.kcal;return g&&k?`В ${trim(g,0)} г ≈ ${trim(k*g/100,0)} ккал`:""}
-function nutRow(i,ix){const pc=PIECES.includes(i.unit)&&!gppOf(i);const v=k=>i.per100&&i.per100[k]!=null?trim(i.per100[k],1):"";
-  return `<div class="enut" id="ei-x-${ix}"${!(i.name||"").trim()||(nutKnown(i)&&!pc)?" hidden":""}><span class="et${i.per100?" own":""}">${nutKnown(i)?"":i.per100?"Ваши данные на 100 г, как на упаковке:":"Нет в справочнике. Впишите с упаковки, на 100 г:"}</span>
-   ${nutKnown(i)?"":[["kcal","ккал"],["p","белки"],["f","жиры"],["c","углев."]].map(([k,l])=>`<label><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="${k}" value="${v(k)}" placeholder="0"><small>${l}</small></label>`).join("")}
+function nutLine(i){const g=ingGrams(i,1);const k=perShown(i)?.kcal;return g&&k?`В ${trim(g,0)} г ≈ ${trim(k*g/100,0)} ккал`:""}
+function perShown(i){return i.per100||lookup(i.name||"")?.per100||null}
+const ICON_SCAN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M8 8.5v7M11 8.5v7M13.5 8.5v7M16 8.5v7" stroke-width="1.7"/></svg>';
+const ICON_PEN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+const ICON_CAM='<svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.5-2h7L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+/* every ingredient shows its calories per 100 g; ✎ opens the four fields, the barcode button fills them from the package */
+function nutInner(i,ix){const pc=PIECES.includes(i.unit)&&!gppOf(i);const P=perShown(i);const open=!P||UI.editor?.nutOpen?.[ix];
+  const v=k=>P&&P[k]!=null?trim(P[k],1):"";
+  return `<div class="nsum"><span class="${P?"":"nwarn"}">${P?`${trim(P.kcal,0)} ккал · Б ${trim(P.p,1)} · Ж ${trim(P.f,1)} · У ${trim(P.c,1)} на 100 г`:"Нет данных о калорийности, на 100 г:"}${i.nutSrc?`<small class="nsrc">${esc(i.nutSrc)}</small>`:""}</span>
+   ${P&&!open?`<button class="nb" data-a="nutEdit" data-i="${ix}" aria-label="Изменить калорийность">${ICON_PEN}</button>`:""}<button class="nb" data-a="scanOpen" data-i="${ix}" aria-label="Сканировать штрихкод">${ICON_SCAN}</button></div>
+   ${open?`<div class="nfields">${[["kcal","ккал"],["p","белки"],["f","жиры"],["c","углев."]].map(([k,l])=>`<label><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="${k}" value="${v(k)}" placeholder="0"><small>${l}</small></label>`).join("")}</div>`:""}
    <span class="ek" id="ei-k-${ix}">${nutLine(i)}</span>
-   ${pc?`<label class="gp"><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="gpp" value="${i.gpp||""}" placeholder="0"><small>г в 1 ${esc(i.unit)}</small></label>`:""}</div>`}
+   ${pc?`<label class="gp"><input type="number" inputmode="decimal" step="any" min="0" data-pi="${ix}" data-pk="gpp" value="${i.gpp||""}" placeholder="0"><small>г в 1 ${esc(i.unit)}</small></label>`:""}`}
+function nutRow(i,ix){return `<div class="enut" id="ei-x-${ix}"${(i.name||"").trim()?"":" hidden"}>${nutInner(i,ix)}</div>`}
 function vEditor(){
   const e=UI.editor;
   return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}${e.source?`<p style="margin:0 0 8px"><a class="btn sm" href="${esc(e.source)}" target="_blank" rel="noopener">Открыть рецепт на сайте ↗</a></p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
@@ -1149,6 +1170,15 @@ function vSheet(){
     return `<h3>Поделиться списком</h3><p class="need">${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}</p>
      <div class="sgroup sharel"><button data-a="shareShop"><span>Отправить</span><span>в мессенджер, заметки…</span></button>
      <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для поиска товаров</span></button></div>`;
+  }
+  if(s.t==="scan"){const i=UI.editor?.ingredients[s.ix];const st=s.st||"cam";
+    return `<h3>Калорийность</h3><p class="need">${esc(i?.name||"")}</p>
+     ${st==="cam"?`<div class="scanbox"><video id="scanV" playsinline muted autoplay></video><div class="scanframe"></div></div><p class="muted small" id="scanSt" style="text-align:center">Наведите камеру на штрихкод</p>`:""}
+     ${st==="notfound"?`<p class="hint">${esc(s.why||"Этого товара нет в базе. Сфотографируйте таблицу пищевой ценности на упаковке или введите вручную.")}</p>`:""}
+     ${st==="nocam"?`<p class="hint">Камера недоступна. Разрешите доступ к камере для этого приложения или сфотографируйте таблицу на упаковке.</p>`:""}
+     ${UI.busy==="scan"?`<div class="row" style="margin-top:12px"><span class="muted small" id="scanCd" style="font-variant-numeric:tabular-nums">${esc(UI.msg.scan?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`
+       :`<label class="btn wide" for="scanPhoto" style="margin-top:12px">${ICON_CAM}Сфотографировать таблицу</label><input type="file" id="scanPhoto" accept="image/*" capture="environment" hidden>
+     ${msgHtml("scan")}<button class="btn ghost wide" style="margin-top:4px" data-a="scanManual">Ввести вручную</button>`}`;
   }
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
@@ -1254,7 +1284,7 @@ async function callAI(prompt,signal,c=aiCfg(),images=[],web=false){
 async function ask(area,prompt,images=[],web=false){
   const NOCONN="Нет соединения с интернетом.";
   if(!navigator.onLine){setMsg(area,NOCONN,true);return null}
-  const wait=90;const t0=Date.now();const what=web?"Ищу рецепты":area==="import"?"Распознаю фото":"ИИ думает";
+  const wait=90;const t0=Date.now();const what=web?"Ищу рецепты":area==="import"||area==="scan"?"Распознаю фото":"ИИ думает";
   const cdText=()=>what+"… осталось "+Math.max(0,wait-Math.floor((Date.now()-t0)/1000))+" с";
   UI.busy=area;UI.msg[area]={t:cdText(),err:false};render();
   /* visible countdown so a slow answer does not look frozen */
@@ -1316,6 +1346,47 @@ ${RULES}`);
 }
 
 /* ---------- recipe photos: shrink before sending to AI ---------- */
+/* ---------- barcode → Open Food Facts; label photo → AI ---------- */
+let scanR=null;/* {stream,timer} while the camera is on */
+function loadZXing(){return window.ZXing?Promise.resolve():new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="vendor/zxing.min.js";sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)})}
+function stopScan(){if(scanR){clearInterval(scanR.timer);scanR.stream?.getTracks().forEach(t=>t.stop());scanR=null}}
+function scanState(st,why){if(UI.sheet?.t!=="scan")return;stopScan();UI.sheet.st=st;UI.sheet.why=why||"";render()}
+/* own frame loop: grab a frame 4 times a second and look for EAN/UPC codes in it */
+async function startScan(){const ix=UI.sheet?.ix;
+  let stream;try{[stream]=await Promise.all([navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}},audio:false}),loadZXing()])}
+  catch(e){stream?.getTracks().forEach(t=>t.stop());scanState("nocam");return}
+  const v=document.getElementById("scanV");if(UI.sheet?.t!=="scan"||!v){stream.getTracks().forEach(t=>t.stop());return}
+  v.srcObject=stream;v.play().catch(()=>{});
+  const Z=window.ZXing,hints=new Map();
+  hints.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.UPC_A,Z.BarcodeFormat.UPC_E]);hints.set(Z.DecodeHintType.TRY_HARDER,true);
+  const reader=new Z.MultiFormatReader();reader.setHints(hints);
+  const cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
+  const me={stream,timer:0};scanR=me;
+  me.timer=setInterval(()=>{if(scanR!==me||!v.videoWidth)return;
+    const w=v.videoWidth,h=v.videoHeight,cw=Math.min(w,1000),ch=Math.round(h*cw/w);cv.width=cw;cv.height=ch;cx.drawImage(v,0,0,cw,ch);
+    let code=null;try{code=reader.decodeWithState(new Z.BinaryBitmap(new Z.HybridBinarizer(new Z.HTMLCanvasElementLuminanceSource(cv)))).getText()}catch(e){}
+    if(code&&scanR===me){stopScan();navigator.vibrate?.(30);lookupBarcode(code,ix)}},250)}
+async function lookupBarcode(code,ix){
+  const el=document.getElementById("scanSt");if(el)el.textContent="Штрихкод "+code+" · ищу в базе…";
+  if(!navigator.onLine){scanState("notfound","Нет соединения с интернетом.");return}
+  try{const ctl=new AbortController(),tm=setTimeout(()=>ctl.abort(),12000);
+    const r=await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,brands,nutriments`,{signal:ctl.signal});clearTimeout(tm);
+    const j=await r.json().catch(()=>({}));const n=j.product?.nutriments||{};
+    const kcal=n["energy-kcal_100g"]!=null?+n["energy-kcal_100g"]:n["energy_100g"]!=null?+n["energy_100g"]/4.184:null;
+    if(j.status!==1||kcal==null||!isFinite(kcal)){scanState("notfound");return}
+    applyNut(ix,{kcal,p:+n.proteins_100g||0,f:+n.fat_100g||0,c:+n.carbohydrates_100g||0},[j.product.brands,j.product.product_name].filter(Boolean).join(" ").slice(0,60))
+  }catch(e){scanState("notfound","Нет соединения с интернетом.")}}
+function applyNut(ix,per,src){const e=UI.editor,i=e?.ingredients[ix];if(!i)return;
+  const r1=x=>Math.round((+x||0)*10)/10;i.per100={kcal:r1(per.kcal),p:r1(per.p),f:r1(per.f),c:r1(per.c)};i.nutSet=true;if(src)i.nutSrc=src;else delete i.nutSrc;
+  e.nutOpen=Object.assign({},e.nutOpen,{[ix]:false});UI.sheet=null;render()}
+async function scanPhoto(file){const ix=UI.sheet?.ix;stopScan();let img;try{img=await shrink(file)}catch(e){setMsg("scan","Не получилось открыть фото.",true);return}
+  if(!aiReady()||aiCfg().preset==="auto"){setMsg("scan","ИИ не подключён в ⚙ Настройках.",true);return}
+  const res=await ask("scan",`На фото упаковка продукта с таблицей пищевой ценности. Найди калорийность, белки, жиры и углеводы на 100 г (или на 100 мл).
+Если в таблице указано только на порцию и вес порции известен — пересчитай на 100 г. Ничего не придумывай.
+Верни ТОЛЬКО JSON: {"kcal": number, "p": number, "f": number, "c": number, "error": string|null}`,[img]);
+  if(!res)return;
+  if(res.error||!isFinite(+res.kcal)){setMsg("scan","Не удалось прочитать таблицу. Попробуйте снять ближе и ровнее.",true);return}
+  applyNut(ix,res,"с фото упаковки")}
 async function shrink(file){
   const url=URL.createObjectURL(file);
   try{
@@ -1600,7 +1671,7 @@ document.body.addEventListener("click",e=>{
       const ix=S.recipes.findIndex(x=>x.id===r.id);if(ix>=0)S.recipes[ix]=r;else S.recipes.push(r);
       for(const i of r.ingredients){const L=lookup(i.name);const d={};
         if(i.cat&&i.cat!=="Другое"&&(!L||L.cat!==i.cat))d.cat=i.cat;
-        if(i.per100&&!L?.per100)d.per100=i.per100;if(i.gpp&&!L?.gpp)d.gpp=i.gpp;if(!L&&i.pack)d.pack=i.pack;
+        if(i.per100&&(i.nutSet||!L?.per100))d.per100=i.per100;if(i.gpp&&!L?.gpp)d.gpp=i.gpp;if(!L&&i.pack)d.pack=i.pack;
         if(Object.keys(d).length)learn(i.name,d)}
       saveRecipe(r);if(ed.isNew){UI.impText="";UI.impUrl=""}UI.editor=null;UI.adding=false;UI.sel=null;UI.scale=null;render();scrollTo({top:0});break}
     case "home":{materialize();const k=b.dataset.key;const it=shoppingList().find(i=>i.key===k);const want=b.dataset.h!=="1";
@@ -1618,6 +1689,9 @@ document.body.addEventListener("click",e=>{
       UI.msg.data={t:"Загружено: рецептов "+S.recipes.length+"."};render();break}
     case "theme":try{localStorage.setItem("kz-theme",b.dataset.v)}catch(e){}applyTheme();applyPalette();render();break;
     case "rmPhoto":UI.photos.splice(+b.dataset.i,1);render();break;
+    case "nutEdit":{const e=UI.editor;if(!e)return;e.nutOpen=Object.assign({},e.nutOpen,{[b.dataset.i]:true});render();break}
+    case "scanOpen":UI.msg.scan={t:""};UI.sheet={t:"scan",ix:+b.dataset.i,st:"cam"};render();startScan();break;
+    case "scanManual":{const ix=UI.sheet?.ix;UI.sheet=null;if(UI.editor)UI.editor.nutOpen=Object.assign({},UI.editor.nutOpen,{[ix]:true});render();break}
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -1663,6 +1737,7 @@ document.body.addEventListener("change",e=>{
   if(t.id==="edDish"){const ed=UI.editor;ed.dishSet=true;if(t.value==="__new"){ed.dishNew=true;ed.dish=""}else{ed.dishNew=false;ed.dish=t.value}render();return}
   if(t.dataset.pick){const id=t.dataset.pick;UI.pick=t.checked?[...UI.pick,id]:UI.pick.filter(x=>x!==id);render();return}
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
+  if(t.id==="scanPhoto"&&t.files.length){scanPhoto(t.files[0]);return}
   if(t.id==="impPhoto"&&t.files.length){UI.impText=document.getElementById("impText").value;addPhotos([...t.files]);return}
   if(t.dataset.move&&t.value){materialize();const W=S.plan.week;const x=findEntry(W,t.dataset.move);if(!x)return;
     W[x.k].splice(x.i,1);if(!W[x.k].length)delete W[x.k];(W[t.value]=W[t.value]||[]).push(x.e);UI.dishMenu=null;UI.sheet=null;savePlan();render();return}
@@ -1694,8 +1769,8 @@ document.body.addEventListener("input",e=>{
   if(t.dataset.ai&&t.dataset.ai!=="preset"){UI.aiDraft[t.dataset.ai]=t.value}
   else if(t.id==="edServ"&&UI.editor.guess){UI.editor.servings=t.value;delete UI.editor.guess;t.classList.remove("warnf");document.getElementById("servHint")?.remove()}
   else if(t.dataset.ed){UI.editor[t.dataset.ed]=t.value;if(t.dataset.ed==="name"&&!UI.editor.dishSet){const sel=document.getElementById("edDish");if(sel&&!UI.editor.dishNew)sel.value=guessDish(t.value)}}
-  else if(t.dataset.pi!=null){const i=UI.editor.ingredients[+t.dataset.pi];const k=t.dataset.pk;if(k==="gpp"){if(+t.value>0)i.gpp=+t.value;else delete i.gpp}else{i.per100=i.per100||{kcal:0,p:0,f:0,c:0};i.per100[k]=+t.value||0}const el=document.getElementById("ei-k-"+t.dataset.pi);if(el)el.textContent=nutLine(i)}
-  else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="qty"){const el=document.getElementById("ei-k-"+t.dataset.ei);if(el)el.textContent=nutLine(i)}if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;const x=document.getElementById("ei-x-"+t.dataset.ei);if(x&&!PIECES.includes(i.unit))x.hidden=!t.value.trim()||nutKnown(i);x?.querySelectorAll("[data-pk]").forEach(n=>{if(n.dataset.pk!=="gpp")n.value=""})}}
+  else if(t.dataset.pi!=null){const i=UI.editor.ingredients[+t.dataset.pi];const k=t.dataset.pk;if(k==="gpp"){if(+t.value>0)i.gpp=+t.value;else delete i.gpp}else{i.per100=i.per100||Object.assign({kcal:0,p:0,f:0,c:0},lookup(i.name||"")?.per100||{});i.per100[k]=+t.value||0;i.nutSet=true;delete i.nutSrc}const el=document.getElementById("ei-k-"+t.dataset.pi);if(el)el.textContent=nutLine(i)}
+  else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="qty"){const el=document.getElementById("ei-k-"+t.dataset.ei);if(el)el.textContent=nutLine(i)}if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;delete i.nutSrc;delete i.nutSet;const x=document.getElementById("ei-x-"+t.dataset.ei);if(x){x.hidden=!t.value.trim();x.innerHTML=nutInner(i,+t.dataset.ei)}}}
   else if(t.id==="impText")UI.impText=t.value;else if(t.id==="moWish")UI.menuOpts.wish=t.value;
 });
 document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exName")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
