@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=ab853e00">
+<link rel="manifest" href="manifest.webmanifest?v=e11b6abe">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -639,7 +639,7 @@ function migrate(){
   const ids=new Set();
   for(const l of Object.values(S.plan.week))for(const e of l){if(!e.id)e.id=uid();ids.add(e.id)}
   for(const l of Object.values(S.plan.week))for(const e of l)delete e.of;
-  S.recipes.forEach(r=>{if(!r.meals||!r.meals.length)r.meals=guessMeals(r.name);if(Array.isArray(r.ingredients))r.ingredients=dedupeIngs(r.ingredients)});
+  S.recipes.forEach(r=>{if(!r.meals||!r.meals.length)r.meals=guessMeals(r.name);if(Array.isArray(r.ingredients))r.ingredients=dedupeIngs(r.ingredients);if(r.dish==="Завтраки")r.dish=""});
 }
 async function boot(){
   /* examples only on the very first launch; an emptied book stays empty */
@@ -675,13 +675,13 @@ function cookServ(week,e){return e.servings+kids(week,e.id).reduce((a,x)=>a+x.e.
 /* a recipe yields r.servings portions; the week can use at most that many */
 /* dish sections: the classic menu order; anything that does not fit goes to "Другое",
    and the owner can type a section of their own in the recipe editor */
-const DISH_CATS=["Завтраки","Супы","Салаты","Закуски","Мясо","Птица","Рыба","Гарниры","Паста","Выпечка","Десерты","Напитки","Другое"];
+const DISH_CATS=["Супы","Салаты","Закуски","Мясо","Птица","Рыба","Гарниры","Каши","Паста","Яйца и творог","Выпечка","Десерты","Напитки","Другое"];
 const DISH_RULES=[["Супы",/суп|борщ|щи\b|солянк|уха\b|рассольник|окрошк|бульон|харчо|гаспачо|рамен|том ям|фо бо/],["Салаты",/салат|винегрет|оливье|цезарь|шуба/],
- ["Десерты",/торт|десерт|мусс|пудинг|морожен|чизкейк|тирамису|панна|желе|мороженое|конфет|брауни|пирожн/],["Выпечка",/пирог|пицц|хлеб|булоч|кекс|маффин|печенье|пирожк|ватрушк|круассан|лаваш|хачапури|штрудель|самса|кулебяк|лепёшк|лепешк/],
- ["Напитки",/смузи|компот|морс|коктейл|лимонад|кисель|какао|чай|кофе/],["Завтраки",/сырник|омлет|яичниц|овсянк|каша|блин|олад|гранол|мюсли|тост|скрембл|запеканк|шакшук|бутерброд/],
+ ["Десерты",/торт|десерт|мусс|пудинг|морожен|чизкейк|тирамису|панна|желе|мороженое|конфет|брауни|пирожн/],["Выпечка",/блин|олад|шарлотк|пирог|пицц|хлеб|булоч|кекс|маффин|печенье|пирожк|ватрушк|круассан|лаваш|хачапури|штрудель|самса|кулебяк|лепёшк|лепешк/],
+ ["Напитки",/смузи|компот|морс|коктейл|лимонад|кисель|какао|чай|кофе/],["Яйца и творог",/сырник|запеканк|омлет|яичниц|скрембл|шакшук|творожн|яйц/],["Каши",/каша|каши|овсянк|гранол|мюсли|манн/],
  ["Паста",/паст|спагетти|макарон|лазань|феттучин|пенне|равиоли|ньокки|лапш|удон|вермишел/],["Рыба",/рыб|лосос|сёмг|семг|треск|тунец|скумбри|сельд|форел|минта|судак|горбуш|кревет|кальмар|мид|морепродукт/],
  ["Птица",/кур|цыпл|индей|утк|гус|бройлер/],["Мясо",/говя|свин|баран|телят|фарш|котлет|плов|стейк|шашлык|гуляш|бефстроган|тефтел|фрикадел|голубц|пельмен|мясн|мясо|ребр/],
- ["Гарниры",/гречк|рис\b|риса|картоф|пюре|булгур|кус-кус|кускус|киноа|перлов|пшён|овощи|рагу|фасол|чечевиц/],["Закуски",/закуск|брускет|канапе|рулет|паштет|хумус|гуакамоле|жульен|тарталет|соус/]];
+ ["Гарниры",/гречк|рис\b|риса|картоф|пюре|булгур|кус-кус|кускус|киноа|перлов|пшён|овощи|рагу|фасол|чечевиц/],["Закуски",/тост|бутерброд|закуск|брускет|канапе|рулет|паштет|хумус|гуакамоле|жульен|тарталет|соус/]];
 function guessDish(name){const n=low(name||"");for(const [c,re] of DISH_RULES)if(re.test(n))return c;return "Другое"}
 function dishOf(r){return (r.dish||"").trim()||guessDish(r.name)}
 function dishCats(){const own=[...new Set(S.recipes.map(dishOf))].filter(c=>!DISH_CATS.includes(c)).sort((a,b)=>a.localeCompare(b,"ru"));return [...DISH_CATS.slice(0,-1),...own,"Другое"]}
