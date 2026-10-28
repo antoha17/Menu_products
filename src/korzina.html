@@ -889,6 +889,8 @@ function render(){
   const sh=vSheet();
   if(scanR&&UI.sheet?.t!=="scan")stopScan();
   if(sh!==UI.lastSh){document.getElementById("sheetBody").innerHTML=sh;UI.lastSh=sh}
+  /* none of the text fields is a contact form: keep iOS from offering contacts, e-mails or passwords */
+  document.querySelectorAll('input[type=text],input[type=search],input[type=url],input:not([type]),textarea').forEach(i=>{if(i.id!=="aiKey"){i.setAttribute("autocomplete","off");i.setAttribute("data-form-type","other")}});
   sheetEl.classList.toggle("on",!!sh);scrimEl.classList.toggle("on",!!sh);document.documentElement.classList.toggle("sheet-open",!!sh);
   if(!sh)UI.sheet=null;
   let toast=document.getElementById("toast");
@@ -1084,7 +1086,7 @@ function nutRow(i,ix){return `<div class="enut" id="ei-x-${ix}"${(i.name||"").tr
 function vEditor(){
   const e=UI.editor;
   return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}${e.source?`<p style="margin:0 0 8px"><a class="btn sm" href="${esc(e.source)}" target="_blank" rel="noopener">Открыть рецепт на сайте ↗</a></p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
-  <div class="grid2" style="margin-top:14px"><div class="field"><label for="edName">Название</label><input type="text" id="edName" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
+  <div class="grid2" style="margin-top:14px"><div class="field"><label for="edTitle">Название</label><input type="text" id="edTitle" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
   <div class="field"><label for="edServ">Порций</label><div class="numspin"><input type="number" inputmode="numeric" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}><span class="spin"><button type="button" data-a="servSpin" data-d="1" aria-label="Больше порций"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 14l5-5 5 5"/></svg></button><button type="button" data-a="servSpin" data-d="-1" aria-label="Меньше порций"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></span></div></div></div>
   ${e.guess?`<p class="hint" id="servHint">В рецепте не сказано, на сколько порций. Посчитал по весу готового блюда: примерно ${trim(e.guess.grams/1000,1)} кг, это около ${e.servings} ${servWord(e.servings)} по ${e.guess.size} г. Если знаете точно, исправьте.</p>`:""}
   <div class="field" style="margin-top:14px"><label for="edDish">Раздел</label><select id="edDish">${[...new Set([...dishCats(),...(e.dish&&!e.dishNew?[e.dish]:[])])].map(c=>`<option${!e.dishNew&&c===(e.dish||guessDish(e.name))?" selected":""}>${esc(c)}</option>`).join("")}<option value="__new"${e.dishNew?" selected":""}>Свой раздел…</option></select>
@@ -1151,7 +1153,7 @@ function vSheet(){
     const x=S.plan.extras.find(e=>e.id===s.id);if(!x)return"";
     const units=["шт","г","кг","мл","л","уп."];const u=x.qty!=null&&x.qty!==""?(x.unit||"шт"):"шт";
     return `<h3>Свой товар</h3><p class="need">Количество можно не указывать</p>
-     <div class="lbl"><label for="xName">Название</label></div><input type="text" id="xName" value="${esc(x.name)}" style="width:100%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)">
+     <div class="lbl"><label for="xTitle">Название</label></div><input type="text" id="xTitle" value="${esc(x.name)}" style="width:100%;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)">
      <div class="lbl" style="margin-top:14px">Количество</div>
      <div class="packrow"><input type="number" id="xQty" step="any" min="0" inputmode="decimal" value="${x.qty??""}" aria-label="Количество"><select id="xUnit" aria-label="Единица" style="width:auto">${units.map(v=>`<option${v===u?" selected":""}>${v}</option>`).join("")}</select></div>
      <div class="lbl" style="margin-top:14px"><label for="xCat">Отдел</label></div><select id="xCat">${CATS.map(c=>`<option${c===x.cat?" selected":""}>${c}</option>`).join("")}</select>
@@ -1757,7 +1759,7 @@ document.body.addEventListener("click",e=>{
     case "rmExtra":S.plan.extras=S.plan.extras.filter(x=>x.id!==b.dataset.id);UI.sheet=null;savePlan();render();break;
     case "extraSheet":UI.sheet={t:"extra",id:b.dataset.id};render();break;
     case "extraSave":{const x=S.plan.extras.find(e=>e.id===b.dataset.id);if(!x)return;materialize();
-      const nm=document.getElementById("xName").value.trim();if(nm)x.name=nm;
+      const nm=document.getElementById("xTitle").value.trim();if(nm)x.name=nm;
       const q=document.getElementById("xQty").value;x.qty=q===""?null:+q;x.unit=x.qty==null?"":document.getElementById("xUnit").value;
       x.cat=document.getElementById("xCat").value;if(x.cat!=="Другое")learn(x.name,{cat:x.cat});
       UI.sheet=null;savePlan();render();break}
