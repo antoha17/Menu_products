@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=2ba0a0c1">
+<link rel="manifest" href="manifest.webmanifest?v=1d219079">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1089,7 +1089,7 @@ function vShop(){
   <div class="card">${buy.length&&done===buy.length?`<div class="prog alldone"><b>Всё куплено ✓</b><button class="btn sm" data-a="resetChecks">Снять отметки</button></div>`
    :`<div class="prog"><div class="prog-t"><b>Осталось купить ${buy.length-done}</b><span>из ${buy.length}</span></div><div class="bar" role="progressbar" aria-label="Куплено" aria-valuemin="0" aria-valuemax="${buy.length}" aria-valuenow="${done}"><i style="width:${buy.length?Math.round(done/buy.length*100):0}%"></i></div></div>`}
    <p class="homeline">Если продукт уже есть дома, смахните его влево</p>${home.length?`<button class="homecount" data-a="toHomeList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Есть дома: ${home.length} ${home.length%10===1&&home.length%100!==11?"продукт":[2,3,4].includes(home.length%10)&&![12,13,14].includes(home.length%100)?"продукта":"продуктов"}<span>показать ↓</span></button>`:""}</div>
-  <div class="actions" style="margin:12px 0 0"><button class="btn sm" data-a="shareShop"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться списком</button><button class="btn sm danger" data-a="clearList">Очистить список</button>${done&&done<buy.length?`<button class="btn sm ghost" data-a="resetChecks">Снять отметки</button>`:""}<span class="copied" id="copiedS"></span></div>
+  <div class="actions" style="margin:12px 0 0"><button class="btn sm" data-a="shareShop"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться списком</button><button class="btn sm" data-a="copyLavka"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></svg>Для Лавки</button><button class="btn sm danger" data-a="clearList">Очистить список</button>${done&&done<buy.length?`<button class="btn sm ghost" data-a="resetChecks">Снять отметки</button>`:""}<span class="copied" id="copiedS"></span></div>
   ${CATS.filter(c=>byCat(c).length).map(c=>`<div class="gtitle">${c}</div><div class="group">${byCat(c).map(item).join("")}</div>`).join("")}
   ${homeCard(home)}
   ${extraCard()}`;
@@ -1495,6 +1495,14 @@ function undoable(label){
     const c=document.querySelector("#toast .cd");if(c)c.textContent=UI.undo.left},1000);
 }
 /* text that reads well in a messenger and pastes back into "Найти ингредиенты" */
+/* plain list for pasting into Yandex Lavka's cart search: one product per line, name + amount, nothing else */
+function lavkaText(){
+  return listItems().filter(i=>!S.plan.checks[i.key]).map(i=>{
+    if(i.f==="none"||i.f==="по вкусу")return i.name;
+    if(i.pack&&["шт","зубч."].includes(i.f))return i.name+" "+i.n+" "+(i.pack.name==="упаковка"?"уп.":i.pack.name);
+    if(i.pack)return i.name+" "+fmt(i.size,i.f)+(i.n>1?", "+i.n+" шт":"");
+    return i.name+" "+fmt(i.v,i.f)}).join("\n");
+}
 function shopText(){
   const all=listItems().filter(i=>!S.plan.checks[i.key]);
   return "Список покупок\n"+CATS.map(c=>{const l=all.filter(i=>i.cat===c);return l.length?"\n"+c+":\n"+l.map(i=>"— "+i.name+(buyText(i)?" — "+buyText(i).replace(/\u00a0/g," "):"")).join("\n"):""}).filter(Boolean).join("\n");
@@ -1618,6 +1626,7 @@ document.body.addEventListener("click",e=>{
     case "packCancel":UI.packEdit=null;render();break;
     case "packSave":{const size=+document.getElementById("pk-size").value;if(!(size>0))return;materialize();delete S.plan.packs[b.dataset.g];learn(b.dataset.nm,{pack:{size,unit:b.dataset.u,name:b.dataset.n}});UI.packEdit=null;UI.sheet=null;savePlan();render();break}
     case "packNone":materialize();S.plan.packs[b.dataset.g]={none:true};UI.packEdit=null;savePlan();render();break;
+    case "copyLavka":{const t=lavkaText();copy(t,"copiedS").then(()=>{const el=document.getElementById("copiedS");if(el&&el.textContent==="Скопировано"){const n=t.split("\n").length;el.textContent=`Скопировано ${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}. В Лавке: корзина → вставить список`;clearTimeout(UI.cpT);UI.cpT=setTimeout(()=>{if(el.isConnected)el.textContent=""},5000)}});break}
     case "shareShop":share(shopText(),"Список покупок","copiedS");break;
     case "resetChecks":S.plan.checks={};savePlan();render();break;
     case "addExtra":{const n=document.getElementById("exName").value.trim();if(!n)return;materialize();parseExtras(n).forEach(x=>S.plan.extras.push({id:uid(),...x}));savePlan();render();break}
