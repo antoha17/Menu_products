@@ -1771,7 +1771,7 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.a==="check"){materialize();if(t.checked)S.plan.checks[t.dataset.key]=true;else delete S.plan.checks[t.dataset.key];savePlan();render();return}
   if(t.dataset.mo){const o=UI.menuOpts;if(t.dataset.mo==="batch")o.batch=t.checked;else o.meals=MEALS.map(x=>x[0]).filter(m=>m===t.dataset.mo?t.checked:o.meals.includes(m));return}
   if(t.dataset.edm){const ed=UI.editor;ed.meals=MEALS.map(x=>x[0]).filter(m=>m===t.dataset.edm?t.checked:ed.meals.includes(m));return}
-  if(t.dataset.ei!=null){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="unit"&&t.value==="по вкусу")i.qty=null;if(t.dataset.f==="unit")render()}
+  if(t.dataset.ei!=null){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="unit"&&t.value==="по вкусу")i.qty=null;if(t.dataset.f==="cat")i.catSet=true;if(t.dataset.f==="unit")render()}
 });
 /* swipe a shopping row to the left: "have it at home" */
 let swp=null;
@@ -1798,7 +1798,9 @@ document.body.addEventListener("input",e=>{
   else if(t.id==="edServ"&&UI.editor.guess){UI.editor.servings=t.value;delete UI.editor.guess;t.classList.remove("warnf");document.getElementById("servHint")?.remove()}
   else if(t.dataset.ed){UI.editor[t.dataset.ed]=t.value;if(t.dataset.ed==="name"&&!UI.editor.dishSet){const sel=document.getElementById("edDish");if(sel&&!UI.editor.dishNew)sel.value=guessDish(t.value)}}
   else if(t.dataset.pi!=null){const i=UI.editor.ingredients[+t.dataset.pi];const k=t.dataset.pk;if(k==="gpp"){if(+t.value>0)i.gpp=+t.value;else delete i.gpp}else{i.per100=i.per100||Object.assign({kcal:0,p:0,f:0,c:0},lookup(i.name||"")?.per100||{});i.per100[k]=+t.value||0;i.nutSet=true;delete i.nutSrc}const el=document.getElementById("ei-k-"+t.dataset.pi);if(el)el.textContent=nutLine(i)}
-  else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="qty"){const el=document.getElementById("ei-k-"+t.dataset.ei);if(el)el.textContent=nutLine(i)}if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;delete i.nutSrc;delete i.nutSet;const x=document.getElementById("ei-x-"+t.dataset.ei);if(x){x.hidden=!t.value.trim();x.innerHTML=nutInner(i,+t.dataset.ei)}}}
+  else if(t.dataset.ei!=null&&t.tagName==="INPUT"){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="qty"){const el=document.getElementById("ei-k-"+t.dataset.ei);if(el)el.textContent=nutLine(i)}if(t.dataset.f==="name"){delete i.per100;delete i.pack;delete i.gpp;delete i.nutSrc;delete i.nutSet;
+    /* the shop section follows the product name until the owner picks one by hand */
+    if(!i.catSet){const c=lookup(t.value)?.cat;const sel=document.getElementById("ei-c-"+t.dataset.ei);const cc=c&&CATS.includes(c)?c:"Другое";i.cat=cc;if(sel)sel.value=cc}const x=document.getElementById("ei-x-"+t.dataset.ei);if(x){x.hidden=!t.value.trim();x.innerHTML=nutInner(i,+t.dataset.ei)}}}
   else if(t.id==="impText")UI.impText=t.value;else if(t.id==="moWish")UI.menuOpts.wish=t.value;
 });
 document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exName")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
