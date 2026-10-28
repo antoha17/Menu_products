@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=9e81623d">
+<link rel="manifest" href="manifest.webmanifest?v=2f33f6b4">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1148,7 +1148,7 @@ function vSheet(){
   if(s.t==="share"){const n=lavkaText().split("\n").filter(Boolean).length;
     return `<h3>Поделиться списком</h3><p class="need">${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}</p>
      <div class="sgroup sharel"><button data-a="shareShop"><span>Отправить</span><span>в мессенджер, заметки…</span></button>
-     <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для вставки в корзину</span></button></div>`;
+     <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для поиска товаров</span></button></div>`;
   }
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
