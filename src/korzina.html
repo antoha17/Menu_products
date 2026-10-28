@@ -78,7 +78,7 @@ input[type=text],input[type=number],input[type=url],input[type=password],select,
 select{appearance:none;-webkit-appearance:none;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat}
 textarea{width:100%;resize:vertical;min-height:150px;line-height:1.45}
 .field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
-.grid2{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:10px}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:10px}
 input[type=checkbox]{appearance:none;-webkit-appearance:none;flex:none;width:24px;height:24px;margin:0;border-radius:50%;border:2px solid var(--muted);background:transparent;display:inline-grid;place-content:center;cursor:pointer;transition:background .2s,border-color .2s,transform .15s}
 input[type=checkbox]::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px);opacity:0}
 input[type=checkbox]:checked{background:var(--accent-fill);border-color:var(--accent-fill)}
@@ -218,6 +218,13 @@ button.qty{cursor:pointer}
 .ingb .q{display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
 .ingb .q svg{width:13px;height:13px}
 .ingb .nwarn{color:var(--warn)}
+.numspin{position:relative}
+.numspin input{width:100%;box-sizing:border-box;padding-right:44px}
+.numspin input::-webkit-inner-spin-button,.numspin input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.numspin input{-moz-appearance:textfield;appearance:textfield}
+.numspin .spin{position:absolute;right:4px;top:4px;bottom:4px;width:36px;display:flex;flex-direction:column;gap:2px}
+.numspin .spin button{flex:1;border:0;border-radius:8px;background:var(--fill);color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
+.numspin .spin svg{width:16px;height:16px}
 .nb{flex:none;width:36px;height:36px;border-radius:50%;border:0;background:var(--fill);color:var(--ink);display:grid;place-items:center;cursor:pointer}
 .nb svg{width:19px;height:19px}
 .nfields{flex:1 1 100%;display:flex;gap:6px}
@@ -1078,7 +1085,7 @@ function vEditor(){
   const e=UI.editor;
   return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}${e.source?`<p style="margin:0 0 8px"><a class="btn sm" href="${esc(e.source)}" target="_blank" rel="noopener">Открыть рецепт на сайте ↗</a></p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
   <div class="grid2" style="margin-top:14px"><div class="field"><label for="edName">Название</label><input type="text" id="edName" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
-  <div class="field"><label for="edServ">Порций</label><input type="number" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}></div></div>
+  <div class="field"><label for="edServ">Порций</label><div class="numspin"><input type="number" inputmode="numeric" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}><span class="spin"><button type="button" data-a="servSpin" data-d="1" aria-label="Больше порций"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 14l5-5 5 5"/></svg></button><button type="button" data-a="servSpin" data-d="-1" aria-label="Меньше порций"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></span></div></div></div>
   ${e.guess?`<p class="hint" id="servHint">В рецепте не сказано, на сколько порций. Посчитал по весу готового блюда: примерно ${trim(e.guess.grams/1000,1)} кг, это около ${e.servings} ${servWord(e.servings)} по ${e.guess.size} г. Если знаете точно, исправьте.</p>`:""}
   <div class="field" style="margin-top:14px"><label for="edDish">Раздел</label><select id="edDish">${[...new Set([...dishCats(),...(e.dish&&!e.dishNew?[e.dish]:[])])].map(c=>`<option${!e.dishNew&&c===(e.dish||guessDish(e.name))?" selected":""}>${esc(c)}</option>`).join("")}<option value="__new"${e.dishNew?" selected":""}>Свой раздел…</option></select>
    ${e.dishNew?`<input type="text" data-ed="dish" value="${esc(e.dish||"")}" placeholder="Название раздела, например Соусы" style="margin-top:8px" aria-label="Свой раздел">`:""}</div>
@@ -1677,7 +1684,7 @@ document.body.addEventListener("click",e=>{
     case "webTake":{const x=UI.webRes?.[+b.dataset.i];if(!x)return;const r=normRecipe(x,/^https?:\/\//.test(x.source||"")?x.source:"");r.note="Рецепт найден в интернете. Сверьте количества с сайтом по ссылке, если сомневаетесь.";openEditor(r,true);break}
     case "stopAI":aiCtl?.abort();break;
     case "parseLocal":parseLocal();break;
-    case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:2,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
+    case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:1,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
     case "addRow":UI.editor.ingredients.push({name:"",qty:null,unit:"г",cat:"Другое",pantry:false});render();document.getElementById("ei-n-"+(UI.editor.ingredients.length-1))?.focus();break;
     case "rmRow":UI.editor.ingredients.splice(+b.dataset.i,1);render();break;
     case "cancelEditor":UI.editor=null;UI.adding=false;render();break;
@@ -1710,6 +1717,8 @@ document.body.addEventListener("click",e=>{
       UI.msg.data={t:"Загружено: рецептов "+S.recipes.length+"."};render();break}
     case "theme":try{localStorage.setItem("kz-theme",b.dataset.v)}catch(e){}applyTheme();applyPalette();render();break;
     case "rmPhoto":UI.photos.splice(+b.dataset.i,1);render();break;
+    case "servSpin":{const e=UI.editor,inp=document.getElementById("edServ");if(!e||!inp)return;const v=Math.max(1,Math.round(+inp.value||1)+ +b.dataset.d);
+      e.servings=v;inp.value=v;if(e.guess){delete e.guess;inp.classList.remove("warnf");document.getElementById("servHint")?.remove()}break}
     case "nutEdit":{const e=UI.editor;if(!e)return;e.nutOpen=Object.assign({},e.nutOpen,{[b.dataset.i]:true});render();break}
     case "ingOpen":{const r=rById(b.dataset.id),i=r?.ingredients[+b.dataset.i];if(!i)return;const P=perShown(i);UI.ingDraft=P?{kcal:P.kcal,p:P.p,f:P.f,c:P.c,src:i.nutSrc||""}:{};UI.sheet={t:"ing",rid:r.id,ix:+b.dataset.i};render();break}
     case "scanOpenR":{const s0=UI.sheet;UI.msg.scan={t:""};UI.sheet={t:"scan",ix:s0.ix,rid:s0.rid,st:"cam"};render();startScan();break}
