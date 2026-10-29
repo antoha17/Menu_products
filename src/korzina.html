@@ -409,6 +409,8 @@ button.add-dish{text-align:left;cursor:pointer}
 /* no backdrop blur on sheets: iOS Safari misplaces the text caret in inputs inside a blurred layer; the dimmed scrim does the job */
 .sheet.glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)}
 .sheet,.picklist{overscroll-behavior:contain}
+/* a short filtered list must not shrink the page under the fixed bars */
+#recList,#dayView{min-height:calc(100lvh - 200px)}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;overflow:clip;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
 .sheet.tall{top:0;bottom:0;height:auto;max-height:none;width:100%;border-radius:0;padding-top:calc(env(safe-area-inset-top,0px) + 26px)}
 .sheet.tall .grab{display:none}
@@ -1801,7 +1803,9 @@ document.body.addEventListener("click",e=>{
         scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-under),behavior:"smooth"})}
       break}
     case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
-    case "recCat":UI.recCat=b.dataset.v;render();break;
+    case "recCat":{/* the section buttons stay where they were; only the list below changes */
+      const ch=()=>document.querySelector(".recipes .chips")||document.getElementById("recQ");const y0=ch()?.getBoundingClientRect().top;
+      UI.recCat=b.dataset.v;render();const el=ch();if(el&&y0!=null)scrollBy(0,el.getBoundingClientRect().top-y0);fixViewport();break}
     case "pickCat":UI.pickCat=b.dataset.v;render();break;
     case "newImport":UI.sel=null;UI.editor=null;UI.adding=true;render();scrollTo({top:0});break;
     case "closeImport":UI.adding=false;UI.photos=[];render();break;
@@ -1889,7 +1893,7 @@ document.body.addEventListener("click",e=>{
       const k=UI.sheet?.k;if(k&&!d.id)addToMeal(r,k);else{saveRecipe(r);savePlan()}
       UI.sheet=null;UI.prodDraft=null;render();break}
     case "scanOpenP":UI.msg.scan={t:""};UI.sheet={t:"scan",back:"prod",k:UI.sheet?.k,st:"cam"};render();startScan();break;
-    case "daySel":UI.day=+b.dataset.v;render();break;
+    case "daySel":UI.day=+b.dataset.v;render();fixViewport();break;
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -1971,7 +1975,7 @@ if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventLis
    opens, so the sheet stays put and the text caret is drawn where the text is */
 let lockY=null;
 function lockPage(on){const b=document.body;if(on&&lockY==null){lockY=scrollY;Object.assign(b.style,{position:"fixed",top:-lockY+"px",left:"0",right:"0",width:"100%"})}
-  else if(!on&&lockY!=null){const y=lockY;lockY=null;Object.assign(b.style,{position:"",top:"",left:"",right:"",width:""});scrollTo(0,y)}}
+  else if(!on&&lockY!=null){const y=lockY;lockY=null;Object.assign(b.style,{position:"",top:"",left:"",right:"",width:""});document.documentElement.style.setProperty("--kb","0px");scrollTo(0,y);fixViewport();setTimeout(fixViewport,350)}}
 function fitSheet(){const vv=window.visualViewport;sheetEl.style.bottom="";sheetEl.style.height="";if(!sheetEl.classList.contains("tall"))return;sheetEl.scrollTop=0;const sb0=document.getElementById("sheetBody");if(sb0)sb0.scrollTop=0;if(vv&&vv.offsetTop)scrollTo(0,0);return;
   const vh=vv?vv.height:innerHeight,kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
   sheetEl.classList.toggle("kbopen",kb>80);sheetEl.style.bottom=kb+"px";sheetEl.scrollTop=0;const sb=document.getElementById("sheetBody");if(sb)sb.scrollTop=0;sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
