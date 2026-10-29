@@ -71,6 +71,7 @@ h3{font-size:17px;margin:0;font-weight:600}
 .btn.danger{color:var(--beet)}
 .btn.sm{padding:7px 12px;font-size:14px}
 .btn:disabled{opacity:.5;cursor:default}
+.btn.primary:disabled{opacity:1;background:var(--fill);color:var(--muted);box-shadow:none}
 .btn:active{transform:scale(.97)}
 .link{border:0;background:none;padding:0;color:var(--accent);cursor:pointer;font-size:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
@@ -255,6 +256,8 @@ button.qty{cursor:pointer}
 .enut .et.own{color:var(--muted)}
 .enut .ek{flex:1 1 100%;font-size:13px;color:var(--accent);font-weight:600}
 .enut .ek:empty{display:none}
+/* on a strong fill, secondary text and lines get darker (lighter in the dark theme) so they stay readable */
+.rinline,.ritem[aria-current="true"]{--muted:color-mix(in srgb,var(--ink) 74%,transparent);--line:color-mix(in srgb,var(--ink) 20%,transparent)}
 .rinline{padding:4px 16px 18px;border-top:1px solid var(--line);background:var(--open-fill,var(--accent-soft))}
 .rinline .rhead h2{display:none}
 .rinline .rhead p:empty{display:none}
