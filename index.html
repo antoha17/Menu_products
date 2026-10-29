@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=13c28a1e">
+<link rel="manifest" href="manifest.webmanifest?v=1ca22677">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -415,6 +415,7 @@ button.add-dish{text-align:left;cursor:pointer}
 .sheet,.picklist{overscroll-behavior:contain}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
 .sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column}
+.newprod{margin:-4px 0 6px}
 .sheet.tall .picklist{flex:1;min-height:0;max-height:none;overflow:auto;-webkit-overflow-scrolling:touch}
 .grab{width:38px;height:5px;border-radius:99px;background:var(--muted);opacity:.45;margin:4px auto 14px}
 .sheet h3{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em}
@@ -757,8 +758,9 @@ const starIcon=on=>`<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><pa
 function foodsHtml(q){q=(q||"").trim();if(q.length<2)return"";
   const mine=new Set(S.recipes.filter(isProd).map(r=>low(r.name)));const fs=foodsMatch(q,12).filter(f=>!mine.has(f.low));
   const exact=fs.some(f=>f.low===low(q))||S.recipes.some(r=>low(r.name)===low(q));
-  return `${fs.length?`<div class="gtitle">Справочник продуктов</div><div class="sgroup">${fs.map(f=>`<button class="pk" data-a="foodAdd" data-n="${esc(f.name)}"><span>${esc(f.name)}</span><span class="m">${trim(f.per100.kcal,0)} ккал · ${f.portion} ${f.unit}</span></button>`).join("")}</div>`:""}
-   ${exact?"":`<button class="mealrow" data-a="prodNew" data-n="${esc(q)}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Новый продукт «${esc(q)}»</button>`}`}
+  return `${fs.length?`<div class="gtitle">Справочник продуктов</div><div class="sgroup">${fs.map(f=>`<button class="pk" data-a="foodAdd" data-n="${esc(f.name)}"><span>${esc(f.name)}</span><span class="m">${trim(f.per100.kcal,0)} ккал · ${f.portion} ${f.unit}</span></button>`).join("")}</div>`:""}`}
+function newProdHtml(q){q=(q||"").trim();if(q.length<2||S.recipes.some(r=>low(r.name)===low(q))||FOODS.some(f=>f.low===low(q)))return"";
+  return `<button class="mealrow newprod" data-a="prodNew" data-n="${esc(q)}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Новый продукт «${esc(q)}»</button>`}
 function prodLine(d){const k=+d.kcal;if(!k||!+d.qty||d.unit==="шт")return d.src?esc(d.src):"";return `${d.qty} ${d.unit} ≈ ${trim(k*(+d.qty)/100,0)} ккал${d.src?" · "+esc(d.src):""}`}
 function makeProduct(d){const r={id:uid(),kind:"product",name:d.name.trim(),dish:"Продукты",servings:1,meals:[],created:Date.now(),
   ingredients:[{name:d.name.trim(),qty:+d.qty||100,unit:d.unit||"г",cat:d.cat||lookup(d.name)?.cat||"Другое",pantry:false,per100:d.per100||null}]};
@@ -992,7 +994,7 @@ function render(){
   if(sh!==UI.lastSh){document.getElementById("sheetBody").innerHTML=sh;UI.lastSh=sh}
   /* none of the text fields is a contact form: keep iOS from offering contacts, e-mails or passwords */
   document.querySelectorAll('input[type=text],input[type=search],input[type=url],input:not([type]),textarea').forEach(i=>{if(i.id!=="aiKey"){i.setAttribute("autocomplete","off");i.setAttribute("data-form-type","other")}});
-  sheetEl.classList.toggle("on",!!sh);sheetEl.classList.toggle("tall",UI.sheet?.t==="pick");fitSheet();scrimEl.classList.toggle("on",!!sh);document.documentElement.classList.toggle("sheet-open",!!sh);
+  sheetEl.classList.toggle("on",!!sh);sheetEl.classList.toggle("tall",UI.sheet?.t==="pick");fitSheet();scrimEl.classList.toggle("on",!!sh);document.documentElement.classList.toggle("sheet-open",!!sh);lockPage(!!sh);
   if(!sh)UI.sheet=null;
   let toast=document.getElementById("toast");
   if(!toast){toast=document.createElement("div");toast.id="toast";toast.className="toast glass";toast.setAttribute("role","status");document.body.appendChild(toast)}
@@ -1260,6 +1262,7 @@ function vSheet(){
     const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
     return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Рецепт или продукт" aria-label="Рецепт или продукт" autocomplete="off" value="${esc(UI.pickQ||"")}">
+     <div id="pickNew">${newProdHtml(UI.pickQ||"")}</div>
      <div id="pickChips"${q?" hidden":""}>${catChips(list,cur,"pickCat")}</div>
      <div class="picklist" id="pickList">${catSections(list,q?"":cur,q,row,"sgroup")}<div id="pickFoods">${foodsHtml(UI.pickQ||"")}</div></div>
      <p class="muted small" id="pickNone"${list.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
@@ -1951,6 +1954,11 @@ document.addEventListener("focusout",e=>{if(e.target.matches?.("input,textarea,s
 if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height;keepVisible()})}
 /* the dish picker keeps one height while you type and sits right above the keyboard,
    so the search field never jumps or hides behind it; results scroll inside */
+/* while a sheet is open the page underneath is pinned in place: iOS then has nothing to scroll when the keyboard
+   opens, so the sheet stays put and the text caret is drawn where the text is */
+let lockY=null;
+function lockPage(on){const b=document.body;if(on&&lockY==null){lockY=scrollY;Object.assign(b.style,{position:"fixed",top:-lockY+"px",left:"0",right:"0",width:"100%"})}
+  else if(!on&&lockY!=null){const y=lockY;lockY=null;Object.assign(b.style,{position:"",top:"",left:"",right:"",width:""});scrollTo(0,y)}}
 function fitSheet(){const vv=window.visualViewport;if(!sheetEl.classList.contains("tall")){sheetEl.style.bottom="";sheetEl.style.height="";return}
   const vh=vv?vv.height:innerHeight,kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
   sheetEl.style.bottom=kb+"px";sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
@@ -1968,7 +1976,7 @@ document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.pd&&UI.prodDraft&&t.tagName==="INPUT"){const k=t.dataset.pd;UI.prodDraft[k]=k==="name"?t.value:(t.value===""?"":+t.value);if(["kcal","p","f","c"].includes(k))delete UI.prodDraft.src;const el=document.getElementById("pdLine");if(el)el.innerHTML=prodLine(UI.prodDraft);return}
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src;return}
-  if(t.id==="pickQ"){UI.pickQ=t.value;const fh=foodsHtml(t.value);document.getElementById("pickFoods").innerHTML=fh;document.getElementById("pickChips").hidden=!!t.value.trim();document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0||!!fh;return}
+  if(t.id==="pickQ"){UI.pickQ=t.value;const fh=foodsHtml(t.value);document.getElementById("pickFoods").innerHTML=fh;document.getElementById("pickChips").hidden=!!t.value.trim();document.getElementById("pickNew").innerHTML=newProdHtml(t.value);document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0||!!fh;return}
   if(t.id==="recQ"){UI.recQ=t.value;document.getElementById("recNone").hidden=filterRows(document.getElementById("recList"),t.value)>0;return}
   if(t.id==="accHue"){setAcc(Object.assign(getAcc(),{h:+t.value}));return}
   if(t.id==="hue"){setPal({id:"custom",h:+t.value});document.querySelectorAll("[data-a=pal]").forEach(x=>x.setAttribute("aria-checked","false"));return}
