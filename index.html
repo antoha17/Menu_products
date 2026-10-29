@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=b86031f1">
+<link rel="manifest" href="manifest.webmanifest?v=312e1b1e">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1738,7 +1738,7 @@ document.body.addEventListener("click",e=>{
     case "parsePhotos":parsePhotos();break;
     case "webSearch":webSearch(false);break;
     case "webMore":webSearch(true);break;
-    case "webReset":UI.webRes=null;UI.webQ="";UI.webSeen=[];UI.webLastQ="";UI.msg.web={t:""};render();document.getElementById("webQ")?.focus();break;
+    case "webReset":UI.webRes=null;UI.webQ="";UI.webSeen=[];UI.webLastQ="";UI.msg.web={t:""};render();break;
     case "webTake":{const x=UI.webRes?.[+b.dataset.i];if(!x)return;const r=normRecipe(x,/^https?:\/\//.test(x.source||"")?x.source:"");r.note="Рецепт найден в интернете. Сверьте количества с сайтом по ссылке, если сомневаетесь.";openEditor(r,true);break}
     case "stopAI":aiCtl?.abort();break;
     case "parseLocal":parseLocal();break;
