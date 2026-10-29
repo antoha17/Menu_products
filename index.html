@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=2937fe37">
+<link rel="manifest" href="manifest.webmanifest?v=9524c120">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -163,6 +163,13 @@ button.qty{cursor:pointer}
 .norm{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
 .norm.over{color:var(--beet);background:color-mix(in srgb,var(--beet) 14%,transparent)}
 .norm.under{color:var(--cool);background:color-mix(in srgb,var(--cool) 14%,transparent)}
+.kcal.ok{color:var(--accent)}
+.kcal.over{color:var(--beet)}
+.kcal b{font-weight:700}
+.kbar{height:5px;border-radius:99px;background:var(--fill);overflow:hidden;margin:-2px 0 2px}
+.kbar i{display:block;height:100%;border-radius:99px;background:var(--accent);opacity:.55;transition:width .3s}
+.kbar.ok i{opacity:1}
+.kbar.over i{background:var(--beet);opacity:1}
 .norm.ok{color:var(--accent);background:var(--accent-soft)}
 .meal{display:flex;flex-direction:column;gap:6px}
 /* small controls keep their look but get a 44 pt finger area */
@@ -740,6 +747,13 @@ function plannedOf(rid){return entries(S.plan.week).filter(x=>x.e.rid===rid).red
 function plannedCount(){return entries(S.plan.week).length}
 const slotLabel=(d,m)=>DAYS_S[d]+", "+MEAL_NAME[m];
 const normOf=()=>{const n=+S.plan.norm;return n>0?n:null};
+/* day calories against the daily norm: "130 / 2 100 ккал" and a thin bar; only "over" is called out */
+function normState(k){const n=normOf();if(!n||k==null)return null;const d=k-n;return Math.abs(d)<=n*.1?"ok":d>0?"over":"under"}
+function dayKcalHtml(k){const n=normOf(),st=normState(k);if(k==null&&!n)return"";
+  if(!n)return `<span class="kcal">≈ ${trim(k,0)} ккал</span>`;
+  return `<span class="kcal${st?" "+st:""}">${st==="ok"?"✓ ":""}${trim(k||0,0)} / ${trim(n,0)} ккал${st==="over"?` <b>+${trim(k-n,0)}</b>`:""}</span>`}
+function dayBar(k){const n=normOf();if(!n)return"";const st=normState(k)||"under";const w=Math.min(100,Math.round((k||0)/n*100));
+  return `<div class="kbar ${st}" role="img" aria-label="${trim(k||0,0)} из ${trim(n,0)} ккал"><i style="width:${w}%"></i></div>`}
 function normTag(k){const n=normOf();if(!n||k==null)return"";const d=k-n;
   if(Math.abs(d)<=n*.1)return `<span class="norm ok">в норме</span>`;
   return d>0?`<span class="norm over">перебор ${trim(d,0)}</span>`:`<span class="norm under">недобор ${trim(-d,0)}</span>`}
@@ -966,10 +980,10 @@ function vWeek(){
     return `<div class="dish"><span class="dn">${esc(r.name)}</span>
      <span class="stepper"><button data-a="serv" data-id="${e.id}" data-d="-1" aria-label="${e.servings<=1?"Убрать блюдо из меню":"Меньше порций"}">−</button><span class="v">${servShort(e.servings)}</span><button data-a="serv" data-id="${e.id}" data-d="1" aria-label="Больше порций">+</button></span>
      <button class="chevb" data-a="dishMenu" data-id="${e.id}" aria-label="Перенести или убрать: ${esc(r.name)}">${ICON_CHEV}</button></div>`};
-  return `<div class="sechead"><h1>Меню недели</h1><p class="sub">${n?`${n} ${dishWord(n)} · ${trim(np,1)} ${portWord(Math.ceil(np))}`:"Пока ничего не запланировано"}${normOf()?` · норма ${trim(normOf(),0)} ккал в день`:""}</p></div>
+  return `<div class="sechead"><h1>Меню недели</h1>${n?"":`<p class="sub">Пока ничего не запланировано</p>`}</div>
   ${n?`<div class="actions"><button class="btn danger" data-a="clearWeek">Очистить меню</button></div>`:""}
   ${S.recipes.length?"":`<div class="banner"><span>Сначала добавьте рецепт на вкладке «Рецепты», потом его можно будет поставить на любой день.</span></div>`}
-  <div class="week">${DAYS.map((dn,di)=>`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${kc[di]!=null?`<span class="kcal">≈ ${trim(kc[di],0)} ккал${normTag(kc[di])}</span>`:""}</div>
+  <div class="week">${DAYS.map((dn,di)=>`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${dayKcalHtml(kc[di])}</div>${dayBar(kc[di])}
    ${MEALS.map(([m,ml])=>{const key=di+"-"+m;const list=entries(W).filter(x=>x.k===key);
     return `<div class="meal"><div class="meal-label"><span>${ml}</span></div>${list.map(dish).join("")}${S.recipes.length?`<button class="mealrow" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Добавить блюдо</button>`:""}</div>`}).join("")}
   </section>`).join("")}</div>`;
@@ -1002,7 +1016,7 @@ function vSettings(){
   <div class="gtitle">Питание</div>
   <div class="group"><div class="ginner">
    <div class="field" style="margin:0"><label for="normIn">Норма калорий в день</label><input type="number" inputmode="numeric" id="normIn" min="0" step="50" value="${normOf()||""}" placeholder="не задана"></div>
-   <p class="muted small" style="margin:8px 0 0">Покажем у каждого дня: <span class="norm ok" style="margin:0">в норме</span>, <span class="norm over" style="margin:0">перебор</span> или <span class="norm under" style="margin:0">недобор</span> (±10%). Пусто — выключено.</p>
+   <p class="muted small" style="margin:8px 0 0">У каждого дня покажем, сколько запланировано из нормы. Зелёным — в норме (±10%), красным — перебор. Пусто — выключено.</p>
   </div></div>
   <div class="gtitle">Сервисы</div>
   <div class="group">
