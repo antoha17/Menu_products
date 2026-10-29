@@ -174,8 +174,8 @@ button.qty{cursor:pointer}
 @media (min-width:900px){.recipes{grid-template-columns:minmax(0,5fr) minmax(0,7fr);align-items:start}.recipes.solo{grid-template-columns:minmax(0,720px)}}
 .ritem{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:12px 12px 12px 16px;cursor:pointer;position:relative;color:var(--ink)}
 .ritem+.ritem::before{content:"";position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line)}
-/* the open recipe's title row is a shade deeper than its body, whatever fill strength is set */
-.ritem[aria-current="true"]{background:linear-gradient(var(--open-fill,var(--accent-soft)),var(--open-fill,var(--accent-soft))),linear-gradient(var(--open-fill,var(--accent-soft)),var(--open-fill,var(--accent-soft))),var(--fill)}
+/* the open recipe's title row is lightly shaded; its body stays on the plain card */
+.ritem[aria-current="true"]{background:var(--fill)}
 .ritem[aria-current="true"] .t{font-weight:600}
 .ritem .t{font-weight:500;overflow-wrap:break-word}
 .pickrow{grid-template-columns:auto minmax(0,1fr) auto}
@@ -258,7 +258,7 @@ button.qty{cursor:pointer}
 .enut .ek:empty{display:none}
 /* on a strong fill, secondary text and lines get darker (lighter in the dark theme) so they stay readable */
 .rinline,.ritem[aria-current="true"]{--muted:color-mix(in srgb,var(--ink) 74%,transparent);--line:color-mix(in srgb,var(--ink) 20%,transparent)}
-.rinline{padding:4px 16px 18px;border-top:1px solid var(--line);background:var(--open-fill,var(--accent-soft))}
+.rinline{padding:4px 16px 18px;border-top:1px solid var(--line)}
 .rinline .rhead h2{display:none}
 .rinline .rhead p:empty{display:none}
 .rsec .gtitle{margin-top:14px}
@@ -334,9 +334,6 @@ button.add-dish{text-align:left;cursor:pointer}
 .hue{width:100%;height:30px;-webkit-appearance:none;appearance:none;background:transparent;margin:4px 0 0}
 .hue::-webkit-slider-runnable-track{height:14px;border-radius:99px;background:linear-gradient(90deg,hsl(0,70%,70%),hsl(60,70%,70%),hsl(120,70%,70%),hsl(180,70%,70%),hsl(240,70%,70%),hsl(300,70%,70%),hsl(360,70%,70%))}
 .hue::-moz-range-track{height:14px;border-radius:99px;background:linear-gradient(90deg,hsl(0,70%,70%),hsl(60,70%,70%),hsl(120,70%,70%),hsl(180,70%,70%),hsl(240,70%,70%),hsl(300,70%,70%),hsl(360,70%,70%))}
-/* same track as the hue sliders, but from faint to full button colour */
-.hue.tint::-webkit-slider-runnable-track{background:linear-gradient(90deg,hsla(var(--acc-h,151),50%,50%,.08),hsl(var(--acc-h,151),50%,45%))}
-.hue.tint::-moz-range-track{background:linear-gradient(90deg,hsla(var(--acc-h,151),50%,50%,.08),hsl(var(--acc-h,151),50%,45%))}
 .hue::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;margin-top:-7px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .hue::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .disc{width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;text-align:left;color:var(--ink)}
@@ -857,7 +854,7 @@ function setAcc(a){try{localStorage.setItem("kz-accent",JSON.stringify(a))}catch
 function applyAccent(){const a=getAcc(),d=isDark(),st=document.documentElement.style,h=a.h==null?151:a.h;st.setProperty("--acc-h",h);
   st.setProperty("--accent",d?`hsl(${h},30%,54%)`:`hsl(${h},46%,34%)`);st.setProperty("--accent-fill",d?`hsl(${h},30%,40%)`:`hsl(${h},46%,34%)`);st.setProperty("--accent-ink","#FFFFFF");
   st.setProperty("--accent-soft",`hsla(${h},${d?30:50}%,${d?50:40}%,${d?.15:.12})`);
-  st.setProperty("--open-fill",`hsla(${h},${d?45:50}%,${d?50:40}%,${(Math.max(0,Math.min(100,a.t))/100*.32).toFixed(3)})`)}
+}
 function applyPalette(){
   applyAccent();
   const p=getPal(),hs=p.id==="none"?[null,null,null]:palHues(p),d=isDark(),st=document.documentElement.style;
@@ -960,8 +957,6 @@ function vSettings(){
    <input type="range" class="hue" id="hue" min="0" max="359" value="${huesNow}" aria-label="Свой оттенок фона">
    <div class="lbl" style="margin-top:10px">Цвет кнопок</div>
    <input type="range" class="hue" id="accHue" min="0" max="359" value="${getAcc().h??151}" aria-label="Цвет кнопок">
-   <div class="lbl" style="margin-top:6px">Фон открытого рецепта</div>
-   <input type="range" class="hue tint" id="accTint" min="0" max="100" value="${getAcc().t}" aria-label="Фон открытого рецепта">
   </div></div>
   <div class="gtitle">Питание</div>
   <div class="group"><div class="ginner">
@@ -1065,7 +1060,7 @@ async function parsePhotos(){
   UI.impText=saved;if(!UI.editor)render();
 }
 function vRecipe(r){
-  const n=UI.scale||r.servings;const k=n/r.servings;const nut=recipeNut(r);const inMenu=plannedOf(r.id);
+  const n=UI.scale||r.servings;const k=n/r.servings;const nut=recipeNut(r);
   const sl=UI.slots||[];const slotTxt=!sl.length?"Выбрать дни и приёмы пищи":sl.length<=2?sl.map(k=>DAYS_S[+k[0]]+", "+MEAL_NAME[k.slice(2)]).join("; "):"Выбрано: "+sl.length+" "+(sl.length%10>=2&&sl.length%10<=4&&(sl.length%100<10||sl.length%100>=20)?"приёма пищи":"приёмов пищи");
   const nAdd=UI.addServ||S.plan.people;
   const byCat={};r.ingredients.forEach(i=>{const c=CATS.includes(i.cat)?i.cat:"Другое";(byCat[c]=byCat[c]||[]).push(i)});
@@ -1076,7 +1071,6 @@ function vRecipe(r){
   <ul class="ings" style="margin-top:16px">${r.ingredients.map((i,ix)=>[i,ix]).sort((a,b)=>CATS.indexOf(CATS.includes(a[0].cat)?a[0].cat:"Другое")-CATS.indexOf(CATS.includes(b[0].cat)?b[0].cat:"Другое")).map(([i,ix])=>`<li><button class="ingb" data-a="ingOpen" data-id="${esc(r.id)}" data-i="${ix}"><span class="n${i.unit!=="по вкусу"&&!perShown(i)?" nwarn":""}">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}${ICON_CHEV}</span></button></li>`).join("")}</ul>
   <div class="row" style="margin-top:10px"><span class="copied" id="copiedR"></span></div>
   <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line)">
-   ${inMenu?`<p class="muted small" style="margin:0 0 10px">Уже в меню: ${trim(inMenu,1)} порц.</p>`:""}
    <div class="addplan">
     <div class="lbl">Добавить в меню</div>
     <button class="slotpick${sl.length?" on":""}" data-a="slotsOpen">${esc(slotTxt)}${ICON_CHEV}</button>
@@ -1832,7 +1826,6 @@ document.body.addEventListener("input",e=>{
   if(t.id==="pickQ"){UI.pickQ=t.value;document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0;return}
   if(t.id==="recQ"){UI.recQ=t.value;document.getElementById("recNone").hidden=filterRows(document.getElementById("recList"),t.value)>0;return}
   if(t.id==="accHue"){setAcc(Object.assign(getAcc(),{h:+t.value}));return}
-  if(t.id==="accTint"){setAcc(Object.assign(getAcc(),{t:+t.value}));return}
   if(t.id==="hue"){setPal({id:"custom",h:+t.value});document.querySelectorAll("[data-a=pal]").forEach(x=>x.setAttribute("aria-checked","false"));return}
   if(t.dataset.ai&&t.dataset.ai!=="preset"){UI.aiDraft[t.dataset.ai]=t.value}
   else if(t.id==="edServ"&&UI.editor.guess){UI.editor.servings=t.value;delete UI.editor.guess;t.classList.remove("warnf");document.getElementById("servHint")?.remove()}
