@@ -736,7 +736,8 @@ function plannedCount(){return entries(S.plan.week).length}
 const slotLabel=(d,m)=>DAYS_S[d]+", "+MEAL_NAME[m];
 const normOf=()=>{const n=+S.plan.norm;return n>0?n:null};
 /* day calories against the daily norm: "130 / 2 100 ккал" and a thin bar; only "over" is called out */
-function normState(k){const n=normOf();if(!n||k==null)return null;const d=k-n;return Math.abs(d)<=n*.1?"ok":d>0?"over":"under"}
+/* over = anything above the norm; green = the last 10% up to the norm itself */
+function normState(k){const n=normOf();if(!n||k==null)return null;const v=Math.round(k);return v>n?"over":v>=n*.9?"ok":"under"}
 function dayKcalHtml(k){const n=normOf(),st=normState(k);if(k==null&&!n)return"";
   if(!n)return `<span class="kcal">≈ ${trim(k,0)} ккал</span>`;
   return `<span class="kcal${st?" "+st:""}">${st==="ok"?"✓ ":""}${trim(k||0,0)} / ${trim(n,0)} ккал${st==="over"?` <b>+${trim(k-n,0)}</b>`:""}</span>`}
@@ -1004,7 +1005,7 @@ function vSettings(){
   <div class="gtitle">Питание</div>
   <div class="group"><div class="ginner">
    <div class="field" style="margin:0"><label for="normIn">Норма калорий в день</label><input type="number" inputmode="numeric" id="normIn" min="0" step="50" value="${normOf()||""}" placeholder="не задана"></div>
-   <p class="muted small" style="margin:8px 0 0">У каждого дня покажем, сколько запланировано из нормы. Зелёным — в норме (±10%), красным — перебор. Пусто — выключено.</p>
+   <p class="muted small" style="margin:8px 0 0">У каждого дня покажем, сколько запланировано из нормы. Зелёным — почти норма, красным — больше нормы. Пусто — выключено.</p>
   </div></div>
   <div class="gtitle">Сервисы</div>
   <div class="group">
