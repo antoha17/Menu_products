@@ -5,7 +5,7 @@
    a floating glass tab bar at the bottom and glass bottom sheets for details. Soft colour blobs sit behind the glass. */
 :root{
   --bg:#EEF2EE; --blob1:#BFE3CC; --blob2:#F6D9C4; --blob3:#CFE0F2;
-  --surface:#FFFFFF; --fill:rgba(118,128,120,.12); --ink:#111613; --muted:#6B746E; --line:rgba(60,67,62,.14);
+  --surface:#FFFFFF; --fill:rgba(118,128,120,.12); --ink:#111613; --muted:#5F6862; --line:rgba(60,67,62,.14);
   --accent:#2E7D55; --accent-fill:#2E7D55; --accent-ink:#FFFFFF; --accent-soft:rgba(46,125,85,.12);
   --beet:#C0304F; --warn:#9A6100; --warn-soft:#F6EBD3; --cool:#2F6DB5;
   --glass:rgba(255,255,255,.58); --glass-edge:rgba(255,255,255,.75); --glass-hi:rgba(255,255,255,.9); --shadow:rgba(20,30,25,.12);
@@ -105,7 +105,7 @@ input[type=checkbox]:active{transform:scale(.9)}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);font-size:15px;font-weight:500;padding:9px 10px;border-radius:999px;cursor:pointer}
 .seg button[aria-checked="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px var(--shadow)}
 .stepper{display:inline-flex;align-items:center;gap:2px;background:var(--fill);border-radius:999px;padding:2px}
-.stepper button{border:0;background:var(--surface);border-radius:50%;width:28px;height:28px;line-height:1;cursor:pointer;padding:0;color:var(--ink);font-size:17px;box-shadow:0 1px 2px var(--shadow)}
+.stepper button{position:relative;border:0;background:var(--surface);border-radius:50%;width:28px;height:28px;line-height:1;cursor:pointer;padding:0;color:var(--ink);font-size:17px;box-shadow:0 1px 2px var(--shadow)}
 .stepper button:disabled{opacity:.35}
 .stepper .v{min-width:4.6em;text-align:center;font-variant-numeric:tabular-nums;font-size:14px}
 
@@ -148,10 +148,17 @@ button.qty{cursor:pointer}
 .norm.under{color:var(--cool);background:color-mix(in srgb,var(--cool) 14%,transparent)}
 .norm.ok{color:var(--accent);background:var(--accent-soft)}
 .meal{display:flex;flex-direction:column;gap:6px}
-.meal-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+/* small controls keep their look but get a 44 pt finger area */
+.stepper button::after,.chevb::after,.erow>button::after,.mealadd::after{content:"";position:absolute;inset:-8px}
+.erow>button,[data-a="closeImport"]{position:relative}
+[data-a="closeImport"]::after{content:"";position:absolute;inset:-6px}
+.numspin .spin{width:44px}
+.meal-label{display:flex;justify-content:space-between;align-items:center;min-height:30px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.mealadd{position:relative;width:30px;height:30px;border-radius:50%;border:0;background:var(--fill);color:var(--accent);display:grid;place-items:center;cursor:pointer;padding:0}
+.mealadd svg{width:16px;height:16px}
 .dish{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;background:var(--accent-soft);border-radius:12px;padding:8px 8px 8px 12px}
 .dish .dn{font-weight:500;overflow-wrap:break-word;min-width:0;font-size:15px}
-.chevb{border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;display:grid;place-items:center;padding:0}
+.chevb{position:relative;border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;display:grid;place-items:center;padding:0}
 .chevb svg{width:16px;height:16px}
 .add-dish{width:100%;font-size:14px;color:var(--muted);background-color:transparent!important;border:1.5px dashed var(--line)!important;border-radius:12px;padding:9px 12px}
 
@@ -191,7 +198,7 @@ button.qty{cursor:pointer}
 .wr .wi{color:var(--ink);opacity:.8}
 .wr .row{margin-top:6px;justify-content:flex-start;flex-wrap:nowrap}
 .wr .row .btn{flex:none;width:auto}
-.slotpick{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:13px 14px;border:1.5px dashed var(--line);border-radius:14px;background:transparent;color:var(--muted);font:inherit;font-size:16px;text-align:left;cursor:pointer}
+.slotpick{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:14px;background:transparent;color:var(--muted);font:inherit;font-size:16px;text-align:left;cursor:pointer}
 .slotpick.on{border-style:solid;color:var(--ink)}
 .slotpick svg{width:14px;height:14px;flex:none}
 .slotgrid{display:grid;grid-template-columns:auto repeat(3,1fr);gap:4px 6px;align-items:center;margin-top:12px}
@@ -263,6 +270,9 @@ button.add-dish{text-align:left;cursor:pointer}
 .rmeta span:first-child{color:var(--ink);font-weight:500}
 .rhead{display:flex;flex-direction:column;gap:10px}
 .nut{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.nutl{margin:12px 0 0;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums}
+.nutl b{color:var(--ink);font-weight:600}
+.nutmiss{margin:6px 0 0;font-size:13px;color:var(--warn)}
 .nut span{background:var(--fill);border-radius:999px;padding:5px 10px;font-size:13px;font-variant-numeric:tabular-nums}
 .nut b{font-weight:700}
 .ings{list-style:none;padding:0 14px;margin:0;background:var(--surface);border-radius:14px;box-shadow:0 1px 2px var(--shadow)}
@@ -635,7 +645,7 @@ async function boot(){
   try{const raw=localStorage.getItem("kz-state");if(raw){S=JSON.parse(raw);saved=true}}catch(e){}
   if(!Array.isArray(S.recipes))S.recipes=[];
   if(!saved){Object.assign(S,exampleState());isExample=true}
-  migrate();render();
+  migrate();render();if(UI.tab==="week")toToday();
   try{
     const [db,user]=await Promise.all([window.claude?.use("db"),window.claude?.use("user")]);
     const id=user?await user.id():null;
@@ -649,7 +659,7 @@ async function boot(){
         S={recipes,plan:plan?clean(plan):emptyPlan(),products};lkCache.clear();
         isExample=false;
       }else if(!isExample){S.recipes.forEach(saveRecipe);savePlan();saveProducts()}
-      migrate();render();
+      migrate();render();if(UI.tab==="week")toToday();
     }
   }catch(e){console.warn("db unavailable",e)}
 }
@@ -914,8 +924,7 @@ function vWeek(){
   ${S.recipes.length?"":`<div class="banner"><span>Сначала добавьте рецепт на вкладке «Рецепты», потом его можно будет поставить на любой день.</span></div>`}
   <div class="week">${DAYS.map((dn,di)=>`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${kc[di]!=null?`<span class="kcal">≈ ${trim(kc[di],0)} ккал${normTag(kc[di])}</span>`:""}</div>
    ${MEALS.map(([m,ml])=>{const key=di+"-"+m;const list=entries(W).filter(x=>x.k===key);
-    return `<div class="meal"><div class="meal-label">${ml}</div>${list.map(dish).join("")}
-    ${S.recipes.length?`<button class="add-dish" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}">+ блюдо</button>`:""}</div>`}).join("")}
+    return `<div class="meal"><div class="meal-label"><span>${ml}</span>${S.recipes.length?`<button class="mealadd" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>`:""}</div>${list.map(dish).join("")}</div>`}).join("")}
   </section>`).join("")}</div>`;
 }
 
@@ -949,11 +958,11 @@ function vSettings(){
   <div class="gtitle">Питание</div>
   <div class="group"><div class="ginner">
    <div class="field" style="margin:0"><label for="normIn">Норма калорий в день</label><input type="number" inputmode="numeric" id="normIn" min="0" step="50" value="${normOf()||""}" placeholder="не задана"></div>
-   <p class="muted small" style="margin:8px 0 0">Необязательно. Если указать, у каждого дня в «Меню недели» появится отметка: <span class="norm ok" style="margin:0">в норме</span>, <span class="norm over" style="margin:0">перебор</span> или <span class="norm under" style="margin:0">недобор</span> с разницей в ккал. «В норме» означает отклонение не больше 10%. Оставьте поле пустым, чтобы ничего не показывать.</p>
+   <p class="muted small" style="margin:8px 0 0">Покажем у каждого дня: <span class="norm ok" style="margin:0">в норме</span>, <span class="norm over" style="margin:0">перебор</span> или <span class="norm under" style="margin:0">недобор</span> (±10%). Пусто — выключено.</p>
   </div></div>
   <div class="gtitle">Сервисы</div>
   <div class="group">
-   <button class="disc" data-a="setToggle" data-k="ai" aria-expanded="${!!op.ai}"><b>ИИ для разбора рецептов</b><span class="val">${esc(aiSummary)}${ICON_CHEV}</span></button>
+   <button class="disc" data-a="setToggle" data-k="ai" aria-expanded="${!!op.ai}"><b>ИИ-помощник</b><span class="val">${esc(aiSummary)}${ICON_CHEV}</span></button>
    ${op.ai?`<div class="discbody">
     <p class="muted small" style="margin:0">Подойдёт любая модель с API. Ключ хранится только на этом устройстве и никуда, кроме выбранного сервиса, не отправляется.</p>
     <div class="field"><label for="aiPreset">Сервис</label><select id="aiPreset" data-ai="preset">${Object.entries(PRESETS).filter(([k])=>k!=="auto"||window.claude).map(([k,v])=>`<option value="${k}"${k===c.preset?" selected":""}>${v.label}</option>`).join("")}</select></div>
@@ -976,7 +985,7 @@ function vSettings(){
 /* ---------- Recipes ---------- */
 function vRecipes(){
   const sel=UI.sel&&rById(UI.sel);const N=S.recipes.length;const q=low(UI.recQ||"");const cur=UI.recCat&&S.recipes.some(r=>dishOf(r)===UI.recCat)?UI.recCat:"";
-  const meta=r=>{const n=recipeNut(r);return `<span class="rmeta num"><span>${r.servings} ${servWord(r.servings)}</span><span>${trim(n.kcal,0)} ккал на 1 порцию</span></span>`};
+  const meta=r=>{const n=recipeNut(r);return `<span class="rmeta num"><span>${trim(n.kcal,0)} ккал/порц.</span><span>${r.servings} порц.</span></span>`};
   const row=(r,on)=>UI.pick?`<label class="ritem pickrow" data-s="${esc(low(r.name))}"${on?"":" hidden"}><input type="checkbox" data-pick="${esc(r.id)}"${UI.pick.includes(r.id)?" checked":""}><span class="t">${esc(r.name)}</span>${meta(r)}</label>`
     :`<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"} aria-expanded="${UI.sel===r.id&&!UI.editor}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span>${meta(r)}${ICON_CHEV}</button>${UI.sel===r.id&&!UI.editor?`<div class="rinline" data-s="${esc(low(r.name))}"${on?"":" hidden"}>${vRecipe(r)}</div>`:""}`;
   const list=N?`<input type="text" enterkeyhint="search" id="recQ" class="searchf" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.recQ||"")}">
@@ -1005,7 +1014,7 @@ function vImport(){
   <div class="blk">
    <div class="lbl lblrow"><span>Фото рецепта</span><span class="aib" title="Фото распознаёт искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>Распознаёт ИИ</span></div>
    ${ph.length?`<div class="photos">${ph.map((x,i)=>`<span class="ph"><img src="${x.dataUrl}" alt="Фото рецепта ${i+1}"><button data-a="rmPhoto" data-i="${i}" aria-label="Убрать фото">×</button></span>`).join("")}</div>`:""}
-   <div class="row">${ph.length<4?`<label class="btn wide" for="impPhoto">${ph.length?"+ ещё фото":"Сфотографировать или выбрать фото"}</label><input type="file" id="impPhoto" accept="image/*" multiple hidden>`:""}
+   <div class="row">${ph.length<4?`<label class="btn wide" for="impPhoto">${ph.length?"+ ещё фото":"Снять или выбрать фото"}</label><input type="file" id="impPhoto" accept="image/*" multiple hidden>`:""}
    ${ph.length&&!busy?`<button class="btn primary wide" data-a="parsePhotos">Найти ингредиенты на ${ph.length>1?ph.length+" фото":"фото"}</button>`:""}</div>
    ${ph.length&&!busy?`<p class="muted small" style="margin:0">Если рецепт на нескольких страницах, добавьте все фото, потом нажмите кнопку.</p>`:""}
   </div>
@@ -1053,8 +1062,8 @@ function vRecipe(r){
   const nAdd=UI.addServ||S.plan.people;
   const byCat={};r.ingredients.forEach(i=>{const c=CATS.includes(i.cat)?i.cat:"Другое";(byCat[c]=byCat[c]||[]).push(i)});
   return `<div class="rhead"><div><h2>${esc(r.name)}</h2><p class="muted small" style="margin:4px 0 0">${r.source?`<a href="${esc(r.source)}" target="_blank" rel="noopener" style="color:var(--accent)">рецепт на сайте ↗</a>`:""}</p></div>
-   <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm" data-a="shareRecipe"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться</button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button><button class="btn sm" data-a="closeRecipe">Свернуть</button></div></div>
-  <div class="nut"><span><b>≈ ${trim(nut.kcal,0)}</b> ккал на порцию</span><span>Б ${trim(nut.p,0)} г</span><span>Ж ${trim(nut.f,0)} г</span><span>У ${trim(nut.c,0)} г</span>${nut.miss.length?`<span class="muted">без учёта: ${esc(nut.miss.join(", "))} — калорийность можно изменить</span>`:""}</div>
+   <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm" data-a="shareRecipe"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться</button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button></div></div>
+  <p class="nutl"><b>${trim(nut.kcal,0)} ккал/порц.</b> · Б ${trim(nut.p,0)} · Ж ${trim(nut.f,0)} · У ${trim(nut.c,0)}</p>${nut.miss.length?`<p class="nutmiss">Без ккал: ${esc(nut.miss.join(", "))} — нажмите на продукт, чтобы указать</p>`:""}
   <div class="row" style="margin-top:16px;justify-content:space-between"><span class="muted">Пересчитать на</span><span class="stepper"><button data-a="scale" data-d="-1" aria-label="Меньше порций">−</button><span class="v" style="min-width:6.5em">${n} ${servWord(n)}</span><button data-a="scale" data-d="1" aria-label="Больше порций">+</button></span></div>
   <ul class="ings" style="margin-top:16px">${r.ingredients.map((i,ix)=>[i,ix]).sort((a,b)=>CATS.indexOf(CATS.includes(a[0].cat)?a[0].cat:"Другое")-CATS.indexOf(CATS.includes(b[0].cat)?b[0].cat:"Другое")).map(([i,ix])=>`<li><button class="ingb" data-a="ingOpen" data-id="${esc(r.id)}" data-i="${ix}"><span class="n${i.unit!=="по вкусу"&&!perShown(i)?" nwarn":""}">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}${ICON_CHEV}</span></button></li>`).join("")}</ul>
   <div class="row" style="margin-top:10px"><span class="copied" id="copiedR"></span></div>
@@ -1085,16 +1094,16 @@ function nutInner(i,ix){const pc=PIECES.includes(i.unit)&&!gppOf(i);const P=perS
 function nutRow(i,ix){return `<div class="enut" id="ei-x-${ix}"${(i.name||"").trim()?"":" hidden"}>${nutInner(i,ix)}</div>`}
 function vEditor(){
   const e=UI.editor;
-  return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}${e.source?`<p style="margin:0 0 8px"><a class="btn sm" href="${esc(e.source)}" target="_blank" rel="noopener">Открыть рецепт на сайте ↗</a></p>`:""}<p class="lede">${e.manual?"Впишите название, число порций и ингредиенты.":"Поправьте названия и количества, если нужно."} Количество ингредиентов указывается на всё блюдо.</p>
+  return `<h2>${e.manual?"Новый рецепт":e.isNew?"Проверьте рецепт":"Изменить рецепт"}</h2>${e.note?`<p class="hint">${esc(e.note)}</p>`:""}${e.source?`<p style="margin:0 0 8px"><a class="btn sm" href="${esc(e.source)}" target="_blank" rel="noopener">Открыть рецепт на сайте ↗</a></p>`:""}<p class="lede">${e.manual?"":"Поправьте, если нужно. "}Количество — на всё блюдо.</p>
   <div class="grid2" style="margin-top:14px"><div class="field"><label for="edTitle">Название</label><input type="text" id="edTitle" data-ed="name" value="${esc(e.name)}" placeholder="Например, сырники"></div>
   <div class="field"><label for="edServ">Порций</label><div class="numspin"><input type="number" inputmode="numeric" min="1" id="edServ" data-ed="servings" value="${e.servings}"${e.guess?' class="warnf"':""}><span class="spin"><button type="button" data-a="servSpin" data-d="1" aria-label="Больше порций"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 14l5-5 5 5"/></svg></button><button type="button" data-a="servSpin" data-d="-1" aria-label="Меньше порций"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg></button></span></div></div></div>
   ${e.guess?`<p class="hint" id="servHint">В рецепте не сказано, на сколько порций. Посчитал по весу готового блюда: примерно ${trim(e.guess.grams/1000,1)} кг, это около ${e.servings} ${servWord(e.servings)} по ${e.guess.size} г. Если знаете точно, исправьте.</p>`:""}
   <div class="field" style="margin-top:14px"><label for="edDish">Раздел</label><select id="edDish">${[...new Set([...dishCats(),...(e.dish&&!e.dishNew?[e.dish]:[])])].map(c=>`<option${!e.dishNew&&c===(e.dish||guessDish(e.name))?" selected":""}>${esc(c)}</option>`).join("")}<option value="__new"${e.dishNew?" selected":""}>Свой раздел…</option></select>
    ${e.dishNew?`<input type="text" data-ed="dish" value="${esc(e.dish||"")}" placeholder="Название раздела, например Соусы" style="margin-top:8px" aria-label="Свой раздел">`:""}</div>
-  <div class="lbl" style="margin-top:16px">Ингредиенты</div><p class="muted small" style="margin:0 0 8px">В каждой строке: продукт, сколько его нужно, единица и отдел магазина.</p>
+  <div class="lbl" style="margin-top:16px">Ингредиенты</div>
   <div class="editor-rows">${e.ingredients.map((i,ix)=>`<div class="erow">
    <input type="text" id="ei-n-${ix}" data-ei="${ix}" data-f="name" value="${esc(i.name)}" aria-label="Ингредиент" placeholder="Продукт, например мука">
-   <input type="number" step="any" min="0" id="ei-q-${ix}" data-ei="${ix}" data-f="qty" value="${i.qty??""}" aria-label="Количество" placeholder="Кол-во">
+   <input type="number" step="any" min="0" id="ei-q-${ix}" data-ei="${ix}" data-f="qty" value="${i.qty??""}" aria-label="Количество" placeholder="Кол.">
    <select id="ei-u-${ix}" data-ei="${ix}" data-f="unit" aria-label="Единица">${[...new Set([...UNITS,i.unit])].map(u=>`<option${u===i.unit?" selected":""}>${esc(u)}</option>`).join("")}</select>
    <select id="ei-c-${ix}" data-ei="${ix}" data-f="cat" aria-label="Отдел">${CATS.map(c=>`<option${c===i.cat?" selected":""}>${c}</option>`).join("")}</select>
    <button data-a="rmRow" data-i="${ix}" aria-label="Удалить строку">×</button>
@@ -1106,8 +1115,8 @@ function vEditor(){
 
 /* ---------- Shopping ---------- */
 function extraCard(){return `<div class="gtitle">Свой товар</div>
-  <div class="card"><div class="addrow"><input type="text" id="exItem" name="item" autocomplete="off" autocorrect="on" placeholder="Хлеб 2 литра молока кофе" aria-label="Что добавить" autocomplete="off"><button class="btn primary" data-a="addExtra">Добавить</button></div>
-   <p class="muted small" style="margin:8px 2px 0">Можно сразу несколько товаров, количество — по желанию. Удобно надиктовать: нажмите <svg class="mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg> на клавиатуре iPhone.</p></div>`
+  <div class="card"><div class="addrow"><input type="text" id="exItem" name="item" autocomplete="off" autocorrect="on" placeholder="Хлеб, молоко…" aria-label="Что добавить" autocomplete="off"><button class="btn primary" data-a="addExtra">Добавить</button></div>
+   <p class="muted small" style="margin:8px 2px 0">Можно несколько сразу и голосом — <svg class="mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg> на клавиатуре</p></div>`
 }
 function homeCard(home){if(!home.length)return"";
   return `<div class="homecard"><div class="hh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Есть дома · ${home.length}</div><div class="group">${home.map(i=>`<div class="item home"><span></span><span class="nm">${esc(i.name)}<span class="need">${i.f==="по вкусу"?"по вкусу":fmt(i.v,i.f)}</span></span><button class="btn sm" data-a="unHome" data-key="${esc(i.key)}">Вернуть в список</button></div>`).join("")}</div></div>`}
@@ -1620,7 +1629,10 @@ async function share(text,title,msgId){
   if(navigator.share){try{await navigator.share({title,text});return}catch(e){if(e&&e.name==="AbortError")return}}
   copy(text,msgId);
 }
-function go(t){UI.tab=t;try{if(t!=="settings")localStorage.setItem("kz-tab",t)}catch(e){}render();window.scrollTo({top:0})}
+function go(t){UI.tab=t;try{if(t!=="settings")localStorage.setItem("kz-tab",t)}catch(e){}render();window.scrollTo({top:0});if(t==="week")toToday()}
+/* the menu opens on today's card, right under the top bar */
+function toToday(){requestAnimationFrame(()=>{const d=document.querySelector(".day.today"),tb=document.getElementById("topbar");if(!d||!tb||!entries(S.plan.week).length)return;
+  const under=(parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8;const y=d.getBoundingClientRect().top+scrollY-under;if(y>40)scrollTo({top:y})})}
 function rmEntry(W,id){for(const k of Object.keys(W)){W[k]=W[k].filter(e=>e.id!==id);if(!W[k].length)delete W[k]}for(const x of entries(W))if(x.e.of===id)delete x.e.of}
 document.body.addEventListener("click",e=>{
   const b=e.target.closest("[data-a]");if(!b)return;const a=b.dataset.a;
