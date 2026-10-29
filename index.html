@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=3140b5a6">
+<link rel="manifest" href="manifest.webmanifest?v=26dfb81c">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -168,12 +168,11 @@ button.qty{cursor:pointer}
 .erow>button,[data-a="closeImport"]{position:relative}
 [data-a="closeImport"]::after{content:"";position:absolute;inset:-6px}
 .numspin .spin{width:44px}
-.meal-label{display:flex;justify-content:space-between;align-items:center;min-height:30px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-/* each meal is a full-width cell, like a row in iOS Settings: tap anywhere to add a dish */
-.mealrow{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;margin:0;padding:0 14px;border:0;border-radius:12px;background:var(--fill);font-family:inherit;font-size:15px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer;transition:background .15s,transform .1s}
-.mealrow:active{transform:scale(.99);background:var(--accent-soft)}
-.mealrow .madd{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:600;color:var(--accent)}
-.mealrow .mplus{width:15px;height:15px}
+.meal-label{display:flex;justify-content:space-between;align-items:center;min-height:22px;margin-top:4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+/* "add a dish" closes each meal's block: a full-width row, no box, tappable anywhere */
+.mealrow{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;margin:0;padding:0 12px;border:0;border-radius:12px;background:transparent;font-family:inherit;font-size:15px;font-weight:600;color:var(--accent);cursor:pointer;text-align:left;transition:background .15s}
+.mealrow:active{background:var(--accent-soft)}
+.mealrow .mplus{width:17px;height:17px}
 .dish{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px;background:var(--accent-soft);border-radius:12px;padding:8px 8px 8px 12px}
 .dish .dn{font-weight:500;overflow-wrap:break-word;min-width:0;font-size:15px}
 .chevb{position:relative;border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;display:grid;place-items:center;padding:0}
@@ -942,7 +941,7 @@ function vWeek(){
   ${S.recipes.length?"":`<div class="banner"><span>Сначала добавьте рецепт на вкладке «Рецепты», потом его можно будет поставить на любой день.</span></div>`}
   <div class="week">${DAYS.map((dn,di)=>`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${kc[di]!=null?`<span class="kcal">≈ ${trim(kc[di],0)} ккал${normTag(kc[di])}</span>`:""}</div>
    ${MEALS.map(([m,ml])=>{const key=di+"-"+m;const list=entries(W).filter(x=>x.k===key);
-    return `<div class="meal">${S.recipes.length?`<button class="meal-label mealrow" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><span>${ml}</span><span class="madd"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>блюдо</span></button>`:`<div class="meal-label"><span>${ml}</span></div>`}${list.map(dish).join("")}</div>`}).join("")}
+    return `<div class="meal"><div class="meal-label"><span>${ml}</span></div>${list.map(dish).join("")}${S.recipes.length?`<button class="mealrow" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Добавить блюдо</button>`:""}</div>`}).join("")}
   </section>`).join("")}</div>`;
 }
 
