@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=26dfb81c">
+<link rel="manifest" href="manifest.webmanifest?v=39b79dba">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -267,8 +267,6 @@ button.qty{cursor:pointer}
 .enut .et.own{color:var(--muted)}
 .enut .ek{flex:1 1 100%;font-size:13px;color:var(--accent);font-weight:600}
 .enut .ek:empty{display:none}
-.tint{width:100%;accent-color:var(--accent);margin:6px 0 0}
-.tintl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
 .rinline{padding:4px 16px 18px;border-top:1px solid var(--line);background:var(--open-fill,var(--accent-soft))}
 .rinline .rhead h2{display:none}
 .rinline .rhead p:empty{display:none}
@@ -345,6 +343,9 @@ button.add-dish{text-align:left;cursor:pointer}
 .hue{width:100%;height:30px;-webkit-appearance:none;appearance:none;background:transparent;margin:4px 0 0}
 .hue::-webkit-slider-runnable-track{height:14px;border-radius:99px;background:linear-gradient(90deg,hsl(0,70%,70%),hsl(60,70%,70%),hsl(120,70%,70%),hsl(180,70%,70%),hsl(240,70%,70%),hsl(300,70%,70%),hsl(360,70%,70%))}
 .hue::-moz-range-track{height:14px;border-radius:99px;background:linear-gradient(90deg,hsl(0,70%,70%),hsl(60,70%,70%),hsl(120,70%,70%),hsl(180,70%,70%),hsl(240,70%,70%),hsl(300,70%,70%),hsl(360,70%,70%))}
+/* same track as the hue sliders, but from faint to full button colour */
+.hue.tint::-webkit-slider-runnable-track{background:linear-gradient(90deg,hsla(var(--acc-h,151),50%,50%,.08),hsl(var(--acc-h,151),50%,45%))}
+.hue.tint::-moz-range-track{background:linear-gradient(90deg,hsla(var(--acc-h,151),50%,50%,.08),hsl(var(--acc-h,151),50%,45%))}
 .hue::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;margin-top:-7px;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .hue::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:#fff;border:0;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .disc{width:100%;border:0;background:transparent;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;text-align:left;color:var(--ink)}
@@ -862,7 +863,7 @@ function blobColor(h,dark){return h==null?"transparent":dark?`hsl(${h},28%,13%)`
 function getAcc(){try{return Object.assign({h:null,t:30},JSON.parse(localStorage.getItem("kz-accent")||"{}"))}catch(e){return {h:null,t:30}}}
 function setAcc(a){try{localStorage.setItem("kz-accent",JSON.stringify(a))}catch(e){}applyAccent()}
 /* buttons and highlights follow one hue; the fill strength only changes the soft highlight behind open rows and chips */
-function applyAccent(){const a=getAcc(),d=isDark(),st=document.documentElement.style,h=a.h==null?151:a.h;
+function applyAccent(){const a=getAcc(),d=isDark(),st=document.documentElement.style,h=a.h==null?151:a.h;st.setProperty("--acc-h",h);
   st.setProperty("--accent",d?`hsl(${h},30%,54%)`:`hsl(${h},46%,34%)`);st.setProperty("--accent-fill",d?`hsl(${h},30%,40%)`:`hsl(${h},46%,34%)`);st.setProperty("--accent-ink","#FFFFFF");
   st.setProperty("--accent-soft",`hsla(${h},${d?30:50}%,${d?50:40}%,${d?.15:.12})`);
   st.setProperty("--open-fill",`hsla(${h},${d?45:50}%,${d?50:40}%,${(Math.max(0,Math.min(100,a.t))/100*.32).toFixed(3)})`)}
@@ -968,9 +969,8 @@ function vSettings(){
    <input type="range" class="hue" id="hue" min="0" max="359" value="${huesNow}" aria-label="Свой оттенок фона">
    <div class="lbl" style="margin-top:10px">Цвет кнопок</div>
    <input type="range" class="hue" id="accHue" min="0" max="359" value="${getAcc().h??151}" aria-label="Цвет кнопок">
-   <div class="lbl" style="margin-top:10px">Заливка открытого рецепта</div>
-   <input type="range" class="tint" id="accTint" min="0" max="100" value="${getAcc().t}" aria-label="Насколько заметна заливка">
-   <div class="tintl"><span>Почти незаметно</span><span>Ярко</span></div>
+   <div class="lbl" style="margin-top:6px">Фон открытого рецепта</div>
+   <input type="range" class="hue tint" id="accTint" min="0" max="100" value="${getAcc().t}" aria-label="Фон открытого рецепта">
   </div></div>
   <div class="gtitle">Питание</div>
   <div class="group"><div class="ginner">
