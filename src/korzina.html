@@ -151,6 +151,15 @@ button.qty{cursor:pointer}
 .norm{display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
 .norm.over{color:var(--beet);background:color-mix(in srgb,var(--beet) 14%,transparent)}
 .norm.under{color:var(--cool);background:color-mix(in srgb,var(--cool) 14%,transparent)}
+.dstrip{position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:15;display:flex;gap:4px;margin:0 -4px 12px;padding:6px 4px;border-radius:16px;background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%)}
+.dsb{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 0 7px;border:0;border-radius:12px;background:transparent;color:var(--ink);font:inherit;font-size:15px;font-weight:600;cursor:pointer;text-transform:capitalize}
+.dsb.tday .dl{color:var(--accent)}
+.dsb.on{background:var(--accent-fill);color:var(--accent-ink)}
+.dsb.on.tday .dl{color:var(--accent-ink)}
+.dsb .dot{width:6px;height:6px;border-radius:50%;background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.dsb .dot.has{background:var(--accent);box-shadow:none}
+.dsb .dot.over{background:var(--beet);box-shadow:none}
+.dsb.on .dot.has{background:var(--accent-ink)}
 .kcal.ok{color:var(--accent)}
 .kcal.over{color:var(--beet)}
 .kcal b{font-weight:700}
@@ -993,6 +1002,11 @@ function render(){
 }
 
 /* ---------- Week ---------- */
+/* the menu shows one day at a time; the strip on top switches days and shows which ones are filled */
+function selDay(today){if(UI.day==null)UI.day=today;return UI.day}
+function dayStrip(W,today,kc){const sd=selDay(today);
+  return `<div class="dstrip" role="tablist" aria-label="Дни недели">${DAYS_S.map((d,di)=>{const has=entries(W).some(x=>x.d===di);const st=normState(kc[di]);
+    return `<button class="dsb${di===sd?" on":""}${di===today?" tday":""}" role="tab" aria-selected="${di===sd}" data-a="daySel" data-v="${di}" aria-label="${DAYS[di]}${di===today?", сегодня":""}"><span class="dl">${d}</span><i class="dot${has?(st==="over"?" over":" has"):""}"></i></button>`}).join("")}</div>`}
 function vWeek(){
   const W=S.plan.week;
   const today=(new Date().getDay()+6)%7;
@@ -1005,7 +1019,8 @@ function vWeek(){
   return `<div class="sechead"><h1>Меню недели</h1>${n?"":`<p class="sub">Пока ничего не запланировано</p>`}</div>
   ${n?`<div class="actions"><button class="btn danger" data-a="clearWeek">Очистить меню</button></div>`:""}
   ${S.recipes.length?"":`<div class="banner"><span>Сначала добавьте рецепт на вкладке «Рецепты», потом его можно будет поставить на любой день.</span></div>`}
-  <div class="week">${DAYS.map((dn,di)=>`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${dayKcalHtml(kc[di])}</div>${dayBar(kc[di])}
+  ${dayStrip(W,today,kc)}
+  <div class="week" id="dayView">${DAYS.map((dn,di)=>di!==selDay(today)?"":`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${dayKcalHtml(kc[di])}</div>${dayBar(kc[di])}
    ${MEALS.map(([m,ml])=>{const key=di+"-"+m;const list=entries(W).filter(x=>x.k===key);
     return `<div class="meal"><div class="meal-label"><span>${ml}</span></div>${list.map(dish).join("")}${S.recipes.length?`<button class="mealrow" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Добавить блюдо</button>`:""}</div>`}).join("")}
   </section>`).join("")}</div>`;
@@ -1746,7 +1761,7 @@ async function share(text,title,msgId){
 }
 function go(t){UI.tab=t;try{if(t!=="settings")localStorage.setItem("kz-tab",t)}catch(e){}render();window.scrollTo({top:0});if(t==="week")toToday()}
 /* the menu opens on today's card, right under the top bar */
-function toToday(){requestAnimationFrame(()=>{const d=document.querySelector(".day.today"),tb=document.getElementById("topbar");if(!d||!tb||!entries(S.plan.week).length)return;
+function toToday(){UI.day=(new Date().getDay()+6)%7;render();scrollTo({top:0});return;requestAnimationFrame(()=>{const d=document.querySelector(".day.today"),tb=document.getElementById("topbar");if(!d||!tb||!entries(S.plan.week).length)return;
   const under=(parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8;const y=d.getBoundingClientRect().top+scrollY-under;if(y>40)scrollTo({top:y})})}
 function rmEntry(W,id){for(const k of Object.keys(W)){W[k]=W[k].filter(e=>e.id!==id);if(!W[k].length)delete W[k]}for(const x of entries(W))if(x.e.of===id)delete x.e.of}
 document.body.addEventListener("click",e=>{
@@ -1871,6 +1886,7 @@ document.body.addEventListener("click",e=>{
       const k=UI.sheet?.k;if(k&&!d.id)addToMeal(r,k);else{saveRecipe(r);savePlan()}
       UI.sheet=null;UI.prodDraft=null;render();break}
     case "scanOpenP":UI.msg.scan={t:""};UI.sheet={t:"scan",back:"prod",k:UI.sheet?.k,st:"cam"};render();startScan();break;
+    case "daySel":UI.day=+b.dataset.v;render();break;
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -1928,6 +1944,10 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.edm){const ed=UI.editor;ed.meals=MEALS.map(x=>x[0]).filter(m=>m===t.dataset.edm?t.checked:ed.meals.includes(m));return}
   if(t.dataset.ei!=null){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="unit"&&t.value==="по вкусу")i.qty=null;if(t.dataset.f==="cat")i.catSet=true;if(t.dataset.f==="unit")render()}
 });
+/* swipe the day card left/right to move to the next/previous day */
+{let ds=null;document.addEventListener("touchstart",e=>{const v=e.target.closest("#dayView");ds=v&&!e.target.closest(".stepper")?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null},{passive:true});
+ document.addEventListener("touchend",e=>{if(!ds)return;const t=e.changedTouches[0],dx=t.clientX-ds.x,dy=t.clientY-ds.y;ds=null;
+   if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8){UI.day=Math.max(0,Math.min(6,(UI.day??0)+(dx<0?1:-1)));render()}})}
 /* swipe a shopping row to the left: "have it at home" */
 let swp=null;
 document.addEventListener("touchstart",e=>{const it=e.target.closest(".item[data-key]");swp=it?{it,x:e.touches[0].clientX,y:e.touches[0].clientY,dx:0,on:false}:null},{passive:true});
