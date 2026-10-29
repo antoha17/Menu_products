@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=c5ef4ea4">
+<link rel="manifest" href="manifest.webmanifest?v=c768b86c">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -787,9 +787,12 @@ function catChips(list,cur,act){const nAll=list.filter(r=>!isProd(r)).length;con
   return `<div class="chips" role="radiogroup" aria-label="Разделы">${fav?`<button class="chip favchip" role="radio" aria-checked="${cur==="__fav"}" data-a="${act}" data-v="__fav">${starIcon(true)}Избранное · ${fav}</button>`:""}<button class="chip" role="radio" aria-checked="${!cur}" data-a="${act}" data-v="">Все · ${nAll}</button>${dishCats().filter(c=>cnt[c]).map(c=>`<button class="chip" role="radio" aria-checked="${cur===c}" data-a="${act}" data-v="${esc(c)}">${esc(c)} · ${cnt[c]}</button>`).join("")}</div>`}
 function catSections(list,cur,q,row,cls){if(cur==="__fav"){list=list.filter(r=>r.fav);cur=""}else if(!cur)list=list.filter(r=>!isProd(r));list=list.slice().sort((a,b)=>!!b.fav-!!a.fav);
   return dishCats().filter(c=>!cur||c===cur).map(c=>{const rs=list.filter(r=>dishOf(r)===c);if(!rs.length)return"";
-  const vis=rs.filter(r=>!q||low(r.name).includes(q)).length;
-  return `<section class="rsec"${vis?"":" hidden"}><div class="gtitle">${esc(c)}</div><div class="${cls}">${rs.map(r=>row(r,!q||low(r.name).includes(q))).join("")}</div></section>`}).join("")}
-function filterRows(box,q){q=low(q);let n=0;box.querySelectorAll(".rsec").forEach(sec=>{let k=0;sec.querySelectorAll("[data-s]").forEach(r=>{const on=!q||r.dataset.s.includes(q);r.hidden=!on;if(on)k++});sec.hidden=!k;n+=k});return n}
+  const vis=rs.filter(r=>!q||nameHit(r.name,q)).length;
+  return `<section class="rsec"${vis?"":" hidden"}><div class="gtitle">${esc(c)}</div><div class="${cls}">${rs.map(r=>row(r,!q||nameHit(r.name,q))).join("")}</div></section>`}).join("")}
+/* search by the start of any word: "с" finds Сырники and Суп, not Борщ с говядиной's middle letters */
+const SHORTW=new Set(["с","со","и","в","во","на","по","из","без","для","к","а","от","под"]);
+function nameHit(name,q){q=low((q||"").trim());if(!q)return true;const ws=low(name).split(/[\s,()%«»"-]+/).filter(x=>!SHORTW.has(x));return q.split(/\s+/).every(w=>ws.some(x=>x.startsWith(w)))}
+function filterRows(box,q){q=low(q);let n=0;box.querySelectorAll(".rsec").forEach(sec=>{let k=0;sec.querySelectorAll("[data-s]").forEach(r=>{const on=!q||nameHit(r.dataset.s,q);r.hidden=!on;if(on)k++});sec.hidden=!k;n+=k});return n}
 function plannedOf(rid){return entries(S.plan.week).filter(x=>x.e.rid===rid).reduce((a,x)=>a+x.e.servings,0)}
 function plannedCount(){return entries(S.plan.week).length}
 const slotLabel=(d,m)=>DAYS_S[d]+", "+MEAL_NAME[m];
@@ -1103,7 +1106,7 @@ function vRecipes(){
   const row=(r,on)=>UI.pick?`<label class="ritem pickrow" data-s="${esc(low(r.name))}"${on?"":" hidden"}><input type="checkbox" data-pick="${esc(r.id)}"${UI.pick.includes(r.id)?" checked":""}><span class="t">${esc(r.name)}</span>${meta(r)}</label>`
     :`<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"} aria-expanded="${UI.sel===r.id&&!UI.editor}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span>${meta(r)}${ICON_CHEV}</button>${UI.sel===r.id&&!UI.editor?`<div class="rinline" data-s="${esc(low(r.name))}"${on?"":" hidden"}>${vRecipe(r)}</div>`:""}`;
   const list=N?`<input type="text" enterkeyhint="search" id="recQ" class="searchf" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.recQ||"")}">
-   ${catChips(S.recipes,cur,"recCat")}<div id="recList">${catSections(S.recipes,cur,q,row,"group")}</div><p class="muted small" id="recNone"${S.recipes.some(r=>(cur?(cur==="__fav"?r.fav:dishOf(r)===cur):!isProd(r))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`:"";
+   ${catChips(S.recipes,cur,"recCat")}<div id="recList">${catSections(S.recipes,cur,q,row,"group")}</div><p class="muted small" id="recNone"${S.recipes.some(r=>(cur?(cur==="__fav"?r.fav:dishOf(r)===cur):!isProd(r))&&(!q||nameHit(r.name,q)))?" hidden":""}>Ничего не найдено.</p>`:"";
   const top=UI.editor?vEditor():!UI.pick&&(UI.adding||!N)?vImport():"";
   const NR=S.recipes.filter(r=>!isProd(r)).length;const word=NR%10===1&&NR%100!==11?"рецепт":[2,3,4].includes(NR%10)&&![12,13,14].includes(NR%100)?"рецепта":"рецептов";
   return `<div class="sechead"><h1>Рецепты</h1><p class="sub">${UI.pick?`Отметьте рецепты для удаления · выбрано ${UI.pick.length}`:NR+" "+word}</p></div>
@@ -1128,7 +1131,7 @@ function vImport(){
   <div class="blk">
    <div class="lbl lblrow"><span>Фото рецепта</span><span class="aib" title="Фото распознаёт искусственный интеллект"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" fill="currentColor"/></svg>Распознаёт ИИ</span></div>
    ${ph.length?`<div class="photos">${ph.map((x,i)=>`<span class="ph"><img src="${x.dataUrl}" alt="Фото рецепта ${i+1}"><button data-a="rmPhoto" data-i="${i}" aria-label="Убрать фото">×</button></span>`).join("")}</div>`:""}
-   <div class="row">${ph.length<4?`<label class="btn wide photob" for="impPhoto">${ph.length?"+ ещё фото":"Снять или выбрать фото"}</label><input type="file" id="impPhoto" accept="image/*" multiple hidden>`:""}
+   <div class="row">${ph.length<4?`<label class="btn wide photob" for="impPhoto">${ph.length?"+ ещё фото":"Сделать или выбрать фото"}</label><input type="file" id="impPhoto" accept="image/*" multiple hidden>`:""}
    ${ph.length&&!busy?`<button class="btn primary wide" data-a="parsePhotos">Найти ингредиенты на ${ph.length>1?ph.length+" фото":"фото"}</button>`:""}</div>
    ${ph.length&&!busy?`<p class="muted small" style="margin:0">Если рецепт на нескольких страницах, добавьте все фото, потом нажмите кнопку.</p>`:""}
   </div>
@@ -1290,7 +1293,7 @@ function vSheet(){
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Рецепт или продукт" aria-label="Рецепт или продукт" autocomplete="off" value="${esc(UI.pickQ||"")}">
      <div id="pickChips"${q?" hidden":""}>${catChips(list,cur,"pickCat")}</div>
      <div class="picklist" id="pickList">${catSections(list,q?"":cur,q,row,"sgroup")}<div id="pickFoods">${foodsHtml(UI.pickQ||"")}</div></div>
-     <p class="muted small" id="pickNone"${list.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
+     <p class="muted small" id="pickNone"${list.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||nameHit(r.name,q)))?" hidden":""}>Ничего не найдено.</p>`;
   }
   if(s.t==="slots"){const sl=UI.slots||[];const r=rById(UI.sel);
     return `<h3>${r?esc(r.name):"Добавить в меню"}</h3><p class="need">Отметьте дни и приёмы пищи</p>
