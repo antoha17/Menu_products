@@ -1646,7 +1646,10 @@ async function copy(text,msgId){
 document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)go(b.dataset.tab)});
 document.getElementById("setBtn").addEventListener("click",()=>go(UI.tab==="settings"?"week":"settings"));
 /* on a phone the detail card sits under the list: bring it into view */
-function showDetail(){if(innerWidth<900)requestAnimationFrame(()=>{const c=document.querySelector(".recipes>.card");if(c)scrollTo({top:c.getBoundingClientRect().top+scrollY-70,behavior:"smooth"})})}
+/* scroll so an element's top sits just under the top bar */
+function underBar(el,smooth){if(!el)return;const tb=document.getElementById("topbar");const under=(parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8;
+  scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-under),behavior:smooth?"smooth":"auto"})}
+function showDetail(){requestAnimationFrame(()=>underBar(document.querySelector(".addcard")||document.querySelector(".recipes>.card")))}
 /* bulk deletions happen at once; a short "Вернуть" toast covers a mis-tap */
 function undoable(label){
   UI.undo={label,left:5,snap:clean({recipes:S.recipes,plan:S.plan})};clearInterval(UI.undoT);
@@ -1784,7 +1787,11 @@ document.body.addEventListener("click",e=>{
       saveRecipe(r);UI.sheet=null;render();break}
     case "scanOpen":UI.msg.scan={t:""};UI.sheet={t:"scan",ix:+b.dataset.i,st:"cam"};render();startScan();break;
     case "scanManual":{const ix=UI.sheet?.ix;if(UI.sheet?.rid){UI.sheet={t:"ing",rid:UI.sheet.rid,ix};render();break}UI.sheet=null;if(UI.editor)UI.editor.nutOpen=Object.assign({},UI.editor.nutOpen,{[ix]:true});render();break}
-    case "favToggle":{const r=rById(b.dataset.id);if(!r)return;materialize();r.fav=!r.fav;if(!r.fav)delete r.fav;saveRecipe(r);UI.lastSh=null;render();break}
+    case "favToggle":{const r=rById(b.dataset.id);if(!r)return;
+      /* the open recipe keeps its place on screen even if the section chips above change */
+      const row=()=>document.querySelector(`.ritem[data-id="${CSS.escape(r.id)}"]`);const y0=row()?.getBoundingClientRect().top;
+      materialize();r.fav=!r.fav;if(!r.fav)delete r.fav;saveRecipe(r);UI.lastSh=null;render();
+      const el=row();if(el&&y0!=null&&UI.tab==="recipes")scrollBy(0,el.getBoundingClientRect().top-y0);break}
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
