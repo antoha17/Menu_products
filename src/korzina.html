@@ -411,8 +411,12 @@ button.add-dish{text-align:left;cursor:pointer}
 .sheet.glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)}
 .sheet,.picklist{overscroll-behavior:contain}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;overflow:clip;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
-.sheet.tall.kbopen h3,.sheet.tall.kbopen .need,.sheet.tall.kbopen .grab{display:none}
-.sheet.tall.kbopen{padding-top:12px;padding-bottom:6px}
+.sheet.tall{top:0;bottom:0;height:auto;max-height:none;width:100%;border-radius:0;padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
+.sheet.tall .grab{display:none}
+.pickhead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pickhead h3{margin:0}
+.pickhead .need{margin:0}
+.sheet.tall .picklist{padding-bottom:45vh}
 .sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;overflow:clip}
 .newprod{margin:6px 0 4px}
 .sheet.tall .picklist{flex:1;min-height:0;max-height:none;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -1265,7 +1269,7 @@ function vSheet(){
     const list=S.recipes.slice().sort((a,b)=>(b.used||0)-(a.used||0)||a.name.localeCompare(b.name,"ru"));
     const cur=UI.pickCat==="__fav"&&list.some(r=>r.fav)?"__fav":UI.pickCat&&list.some(r=>dishOf(r)===UI.pickCat)?UI.pickCat:"";
     const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
-    return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
+    return `<div class="pickhead"><button class="xbtn" data-a="closeSheet" aria-label="Закрыть">×</button><div><h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p></div></div>
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Рецепт или продукт" aria-label="Рецепт или продукт" autocomplete="off" value="${esc(UI.pickQ||"")}">
      <div id="pickChips"${q?" hidden":""}>${catChips(list,cur,"pickCat")}</div>
      <div class="picklist" id="pickList">${catSections(list,q?"":cur,q,row,"sgroup")}<div id="pickFoods">${foodsHtml(UI.pickQ||"")}</div></div>
@@ -1968,7 +1972,7 @@ if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventLis
 let lockY=null;
 function lockPage(on){const b=document.body;if(on&&lockY==null){lockY=scrollY;Object.assign(b.style,{position:"fixed",top:-lockY+"px",left:"0",right:"0",width:"100%"})}
   else if(!on&&lockY!=null){const y=lockY;lockY=null;Object.assign(b.style,{position:"",top:"",left:"",right:"",width:""});scrollTo(0,y)}}
-function fitSheet(){const vv=window.visualViewport;if(!sheetEl.classList.contains("tall")){sheetEl.style.bottom="";sheetEl.style.height="";return}
+function fitSheet(){const vv=window.visualViewport;sheetEl.style.bottom="";sheetEl.style.height="";if(!sheetEl.classList.contains("tall"))return;sheetEl.scrollTop=0;const sb0=document.getElementById("sheetBody");if(sb0)sb0.scrollTop=0;if(vv&&vv.offsetTop)scrollTo(0,0);return;
   const vh=vv?vv.height:innerHeight,kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
   sheetEl.classList.toggle("kbopen",kb>80);sheetEl.style.bottom=kb+"px";sheetEl.scrollTop=0;const sb=document.getElementById("sheetBody");if(sb)sb.scrollTop=0;sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
 if(window.visualViewport){visualViewport.addEventListener("resize",fitSheet);visualViewport.addEventListener("scroll",fitSheet)}
