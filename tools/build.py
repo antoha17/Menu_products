@@ -3,6 +3,9 @@ from PIL import Image, ImageDraw
 src, out = sys.argv[1], sys.argv[2]
 os.makedirs(out,exist_ok=True)
 page = open(src, encoding='utf8').read()
+# the built-in product catalogue lives in tools/foods.txt and is inlined into the page
+foods = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'foods.txt'), encoding='utf8').read().strip()
+page = page.replace('/*FOODS*/""', json.dumps(foods, ensure_ascii=False))
 ver = hashlib.sha1(page.encode()).hexdigest()[:8]
 head = '''<!doctype html><html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
