@@ -217,6 +217,7 @@ button.qty{cursor:pointer}
 .item.armed::after{background:var(--accent-fill);color:var(--accent-ink)}
 .item.home .nm{color:var(--muted)}
 .homeline{margin:10px 0 0;font-size:13px;color:var(--muted)}
+.bkb{background:var(--accent-soft)}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
 .homecount span{margin-left:auto;font-weight:500;font-size:13px}
@@ -899,8 +900,9 @@ function render(){
   document.getElementById("barTitle").textContent=TITLES[UI.tab]||"";
   document.getElementById("main").className="wrap"+(UI.tab==="week"||UI.tab==="recipes"?" wide":"");
   const banner=isExample&&UI.tab!=="settings"?`<div class="banner"><span><b>Это пример.</b> Рецепты и меню показывают, как всё работает. Добавьте свой рецепт или измените меню, и данные станут вашими.</span><button class="btn sm" data-a="clearExamples">Начать с чистого листа</button></div>`:"";
+  const bk=!banner&&backupDue()?`<div class="banner bkb"><span>${lsGet("kz-backup")?"Резервную копию не сохраняли "+backupAgo().replace(" назад","")+".":"Сохраните резервную копию рецептов и меню."}</span><span class="row" style="gap:8px"><button class="btn sm primary" data-a="backupSave">Сохранить</button><button class="btn sm ghost" data-a="bkLater">Позже</button></span></div>`:"";
   let html=UI.tab==="settings"?vSettings():UI.tab==="week"?vWeek():UI.tab==="recipes"?vRecipes():vShop();
-  if(banner){const a=html.indexOf("</div>",html.indexOf('class="sechead"'))+6;html=html.slice(0,a)+banner+html.slice(a)}
+  if(banner||bk){const a=html.indexOf("</div>",html.indexOf('class="sechead"'))+6;html=html.slice(0,a)+(banner||bk)+html.slice(a)}
   app.innerHTML=html;
   const sh=vSheet();
   if(scanR&&UI.sheet?.t!=="scan")stopScan();
@@ -975,12 +977,10 @@ function vSettings(){
     <div class="field"><label for="aiModel">Модель</label><input type="text" id="aiModel" data-ai="model" value="${esc(c.model)}" autocomplete="off" placeholder="название модели из документации сервиса"></div>`}
     <div class="row"><button class="btn primary" data-a="aiSave">Сохранить</button>${auto?"":`<button class="btn" data-a="aiTest" ${UI.busy?"disabled":""}>${UI.busy==="ai"?"Проверяю…":"Проверить подключение"}</button>`}</div>
     ${msgHtml("ai")}</div>`:""}
-   <button class="disc" data-a="setToggle" data-k="data" aria-expanded="${!!op.data}"><b>Перенос данных</b><span class="val">${ICON_CHEV}</span></button>
+   <button class="disc" data-a="setToggle" data-k="data" aria-expanded="${!!op.data}"><b>Резервная копия</b><span class="val">${esc(backupAgo())}${ICON_CHEV}</span></button>
    ${op.data?`<div class="discbody">
-    <p class="muted small" style="margin:0">Чтобы перенести рецепты и меню на другое устройство: скопируйте данные здесь и вставьте там.</p>
-    <div class="row"><button class="btn" data-a="exportData">Скопировать мои данные</button><span class="copied" id="copiedD"></span></div>
-    <div class="field"><label for="impData">Вставить данные с другого устройства</label><textarea id="impData" style="min-height:90px"></textarea></div>
-    <div class="row"><button class="btn" data-a="importData">Загрузить и заменить всё</button></div>
+    <p class="muted small" style="margin:0">Рецепты, меню и покупки хранятся только на этом телефоне. Копия — файл, который можно сохранить в «Файлы» или iCloud Drive и восстановить на любом устройстве.</p>
+    <div class="row"><button class="btn primary" data-a="backupSave">Сохранить копию</button><label class="btn" for="restoreFile">Восстановить</label><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
     ${msgHtml("data")}</div>`:""}
   </div>`;
 }
@@ -1590,6 +1590,27 @@ function openEditor(r,isNew){UI.editor=clean(Object.assign({id:r.id||uid(),isNew
 
 /* ---------- actions ---------- */
 const armed={};
+/* ---------- backup: a JSON file the owner keeps in Files / iCloud Drive ---------- */
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function backupAgo(){const t=+lsGet("kz-backup");if(!t)return"не сохранялась";const d=Math.floor((Date.now()-t)/864e5);return d<1?"сегодня":d===1?"вчера":d+" "+(d%10===1&&d%100!==11?"день":[2,3,4].includes(d%10)&&![12,13,14].includes(d%100)?"дня":"дней")+" назад"}
+async function backupSave(){
+  const data=JSON.stringify({app:"korzina",v:1,saved:new Date().toISOString(),recipes:S.recipes,plan:S.plan,products:S.products||{}});
+  const name="korzina-"+new Date().toISOString().slice(0,10)+".json";const file=new File([data],name,{type:"application/json"});
+  const done=()=>{lsSet("kz-backup",String(Date.now()));lsSet("kz-bksnooze","0");setMsg("data","Копия сохранена.");render()};
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});done()}catch(e){if(e&&e.name!=="AbortError")setMsg("data","Не получилось сохранить файл.",true)}return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);done()}
+async function backupRestore(f){let d;try{d=JSON.parse(await f.text())}catch(e){setMsg("data","Это не файл копии приложения.",true);return}
+  if(!d||d.app!=="korzina"&&!Array.isArray(d.recipes)||!Array.isArray(d.recipes)){setMsg("data","В файле нет рецептов.",true);return}
+  materialize();undoable("Данные восстановлены из копии");
+  const old=S.recipes.map(r=>r.id);S={recipes:d.recipes,plan:d.plan||emptyPlan(),products:d.products||S.products||{}};lkCache.clear();isExample=false;migrate();if(store.mode==="db")saveProducts();
+  if(store.mode==="db"){old.filter(id=>!S.recipes.some(r=>r.id===id)).forEach(deleteRecipeStore);S.recipes.forEach(saveRecipe);savePlan()}else localSave();
+  setMsg("data","Восстановлено: рецептов "+S.recipes.length+".");render()}
+/* gentle reminder inside the app: once a week, only when there is something of the owner's to lose */
+function backupDue(){if(isExample||!S.recipes.length||UI.tab==="settings")return false;
+  if(!lsGet("kz-firstuse"))lsSet("kz-firstuse",String(Date.now()));
+  const last=+lsGet("kz-backup")||+lsGet("kz-firstuse"),snooze=+lsGet("kz-bksnooze")||0;
+  return Date.now()-last>7*864e5&&Date.now()>snooze}
 function arm(id,btn,label){if(armed[id]){delete armed[id];return true}armed[id]=1;const old=btn.textContent;btn.textContent=label;setTimeout(()=>{delete armed[id];if(btn.isConnected)btn.textContent=old},3000);return false}
 async function copy(text,msgId){
   let ok=false;try{await navigator.clipboard.writeText(text);ok=true}catch(e){}
@@ -1724,13 +1745,8 @@ document.body.addEventListener("click",e=>{
     case "aiTest":{const c=UI.aiDraft;UI.busy="ai";UI.msg.ai={t:"Проверяю…"};render();aiCtl=new AbortController();
       callAI('Ответь только JSON без пояснений: {"ok": true}',aiCtl.signal,c).then(r=>{UI.busy=null;UI.msg.ai=r&&r.ok?{t:"Подключение работает. Не забудьте сохранить."}:{t:"Сервис ответил, но не в том формате. Попробуйте другую модель.",err:true};render()})
         .catch(e=>{UI.busy=null;UI.msg.ai={t:e.code==="http"?"Сервис вернул ошибку: "+e.message:(ERRS[e.code]||"Не получилось подключиться."),err:true};render()});break}
-    case "exportData":copy(JSON.stringify({app:"korzina",v:1,recipes:S.recipes,plan:S.plan,products:S.products||{}}),"copiedD");break;
-    case "importData":{let d;try{d=JSON.parse(document.getElementById("impData").value)}catch(e){setMsg("data","Это не похоже на данные приложения. Скопируйте их кнопкой «Скопировать мои данные» и вставьте целиком.",true);return}
-      if(!d||!Array.isArray(d.recipes)){setMsg("data","В тексте нет рецептов. Скопируйте данные целиком.",true);return}
-      if(!arm("imp",b,"Точно заменить всё?"))return;
-      const old=S.recipes.map(r=>r.id);S={recipes:d.recipes,plan:d.plan||emptyPlan(),products:d.products||S.products||{}};lkCache.clear();isExample=false;migrate();if(store.mode==="db")saveProducts();
-      if(store.mode==="db"){old.filter(id=>!S.recipes.some(r=>r.id===id)).forEach(deleteRecipeStore);S.recipes.forEach(saveRecipe);savePlan()}else localSave();
-      UI.msg.data={t:"Загружено: рецептов "+S.recipes.length+"."};render();break}
+    case "backupSave":backupSave();break;
+    case "bkLater":try{localStorage.setItem("kz-bksnooze",String(Date.now()+3*864e5))}catch(e){}render();break;
     case "theme":try{localStorage.setItem("kz-theme",b.dataset.v)}catch(e){}applyTheme();applyPalette();render();break;
     case "rmPhoto":UI.photos.splice(+b.dataset.i,1);render();break;
     case "servSpin":{const e=UI.editor,inp=document.getElementById("edServ");if(!e||!inp)return;const v=Math.max(1,Math.round(+inp.value||1)+ +b.dataset.d);
@@ -1788,6 +1804,7 @@ document.body.addEventListener("change",e=>{
   if(t.id==="edDish"){const ed=UI.editor;ed.dishSet=true;if(t.value==="__new"){ed.dishNew=true;ed.dish=""}else{ed.dishNew=false;ed.dish=t.value}render();return}
   if(t.dataset.pick){const id=t.dataset.pick;UI.pick=t.checked?[...UI.pick,id]:UI.pick.filter(x=>x!==id);render();return}
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
+  if(t.id==="restoreFile"&&t.files.length){backupRestore(t.files[0]);t.value="";return}
   if(t.id==="scanPhoto"&&t.files.length){scanPhoto(t.files[0]);return}
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src}
   if(t.id==="impPhoto"&&t.files.length){UI.impText=document.getElementById("impText").value;addPhotos([...t.files]);return}
