@@ -402,8 +402,10 @@ button.add-dish{text-align:left;cursor:pointer}
 .sheet.glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)}
 .sheet,.picklist{overscroll-behavior:contain}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
+.sheet.tall.kbopen h3,.sheet.tall.kbopen .need,.sheet.tall.kbopen .grab{display:none}
+.sheet.tall.kbopen{padding-top:12px;padding-bottom:6px}
 .sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column}
-.newprod{margin:-4px 0 6px}
+.newprod{margin:6px 0 4px}
 .sheet.tall .picklist{flex:1;min-height:0;max-height:none;overflow:auto;-webkit-overflow-scrolling:touch}
 .grab{width:38px;height:5px;border-radius:99px;background:var(--muted);opacity:.45;margin:4px auto 14px}
 .sheet h3{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em}
@@ -746,7 +748,7 @@ const starIcon=on=>`<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><pa
 function foodsHtml(q){q=(q||"").trim();if(q.length<2)return"";
   const mine=new Set(S.recipes.filter(isProd).map(r=>low(r.name)));const fs=foodsMatch(q,12).filter(f=>!mine.has(f.low));
   const exact=fs.some(f=>f.low===low(q))||S.recipes.some(r=>low(r.name)===low(q));
-  return `${fs.length?`<div class="gtitle">Справочник продуктов</div><div class="sgroup">${fs.map(f=>`<button class="pk" data-a="foodAdd" data-n="${esc(f.name)}"><span>${esc(f.name)}</span><span class="m">${trim(f.per100.kcal,0)} ккал · ${f.portion} ${f.unit}</span></button>`).join("")}</div>`:""}`}
+  return `${fs.length?`<div class="gtitle">Справочник продуктов</div><div class="sgroup">${fs.map(f=>`<button class="pk" data-a="foodAdd" data-n="${esc(f.name)}"><span>${esc(f.name)}</span><span class="m">${trim(f.per100.kcal,0)} ккал · ${f.portion} ${f.unit}</span></button>`).join("")}</div>`:""}${newProdHtml(q)}`}
 function newProdHtml(q){q=(q||"").trim();if(q.length<2||S.recipes.some(r=>low(r.name)===low(q))||FOODS.some(f=>f.low===low(q)))return"";
   return `<button class="mealrow newprod" data-a="prodNew" data-n="${esc(q)}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Новый продукт «${esc(q)}»</button>`}
 function prodLine(d){const k=+d.kcal;if(!k||!+d.qty||d.unit==="шт")return d.src?esc(d.src):"";return `${d.qty} ${d.unit} ≈ ${trim(k*(+d.qty)/100,0)} ккал${d.src?" · "+esc(d.src):""}`}
@@ -1250,7 +1252,6 @@ function vSheet(){
     const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
     return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Рецепт или продукт" aria-label="Рецепт или продукт" autocomplete="off" value="${esc(UI.pickQ||"")}">
-     <div id="pickNew">${newProdHtml(UI.pickQ||"")}</div>
      <div id="pickChips"${q?" hidden":""}>${catChips(list,cur,"pickCat")}</div>
      <div class="picklist" id="pickList">${catSections(list,q?"":cur,q,row,"sgroup")}<div id="pickFoods">${foodsHtml(UI.pickQ||"")}</div></div>
      <p class="muted small" id="pickNone"${list.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
@@ -1949,7 +1950,7 @@ function lockPage(on){const b=document.body;if(on&&lockY==null){lockY=scrollY;Ob
   else if(!on&&lockY!=null){const y=lockY;lockY=null;Object.assign(b.style,{position:"",top:"",left:"",right:"",width:""});scrollTo(0,y)}}
 function fitSheet(){const vv=window.visualViewport;if(!sheetEl.classList.contains("tall")){sheetEl.style.bottom="";sheetEl.style.height="";return}
   const vh=vv?vv.height:innerHeight,kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
-  sheetEl.style.bottom=kb+"px";sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
+  sheetEl.classList.toggle("kbopen",kb>80);sheetEl.style.bottom=kb+"px";sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
 if(window.visualViewport){visualViewport.addEventListener("resize",fitSheet);visualViewport.addEventListener("scroll",fitSheet)}
 /* the keyboard never covers the field being typed in: the page gets extra room at the bottom
    while the keyboard is up, and the field's card is scrolled just above the keyboard */
@@ -1964,7 +1965,7 @@ document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.pd&&UI.prodDraft&&t.tagName==="INPUT"){const k=t.dataset.pd;UI.prodDraft[k]=k==="name"?t.value:(t.value===""?"":+t.value);if(["kcal","p","f","c"].includes(k))delete UI.prodDraft.src;const el=document.getElementById("pdLine");if(el)el.innerHTML=prodLine(UI.prodDraft);return}
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src;return}
-  if(t.id==="pickQ"){UI.pickQ=t.value;const fh=foodsHtml(t.value);document.getElementById("pickFoods").innerHTML=fh;document.getElementById("pickChips").hidden=!!t.value.trim();document.getElementById("pickNew").innerHTML=newProdHtml(t.value);document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0||!!fh;return}
+  if(t.id==="pickQ"){UI.pickQ=t.value;const fh=foodsHtml(t.value);document.getElementById("pickFoods").innerHTML=fh;document.getElementById("pickChips").hidden=!!t.value.trim();document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0||!!fh;return}
   if(t.id==="recQ"){UI.recQ=t.value;document.getElementById("recNone").hidden=filterRows(document.getElementById("recList"),t.value)>0;return}
   if(t.id==="accHue"){setAcc(Object.assign(getAcc(),{h:+t.value}));return}
   if(t.id==="hue"){setPal({id:"custom",h:+t.value});document.querySelectorAll("[data-a=pal]").forEach(x=>x.setAttribute("aria-checked","false"));return}
@@ -1977,6 +1978,6 @@ document.body.addEventListener("input",e=>{
     if(!i.catSet){const c=lookup(t.value)?.cat;const sel=document.getElementById("ei-c-"+t.dataset.ei);const cc=c&&CATS.includes(c)?c:"Другое";i.cat=cc;if(sel)sel.value=cc}const x=document.getElementById("ei-x-"+t.dataset.ei);if(x){x.hidden=!t.value.trim();x.innerHTML=nutInner(i,+t.dataset.ei)}}}
   else if(t.id==="impText")UI.impText=t.value;else if(t.id==="moWish")UI.menuOpts.wish=t.value;
 });
-document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exItem")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
+document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="exItem")app.querySelector('[data-a="addExtra"]').click();if(e.key==="Enter"&&e.target.id==="pickQ")e.target.blur();if(e.key==="Enter"&&e.target.id==="webQ"&&UI.busy!=="web"){e.target.blur();webSearch(false)}});
 boot();
 </script>
