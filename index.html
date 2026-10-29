@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=285efb9a">
+<link rel="manifest" href="manifest.webmanifest?v=f7046e14">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -406,9 +406,10 @@ button.add-dish{text-align:left;cursor:pointer}
 /* sheet */
 .scrim{position:fixed;inset:0;z-index:40;background:var(--dim);opacity:0;pointer-events:none;transition:opacity .5s cubic-bezier(.32,.72,0,1)}
 .scrim.on{opacity:1;pointer-events:auto}
-.sheet{position:fixed;z-index:41;left:50%;bottom:0;width:min(640px,100%);max-height:85vh;overflow:auto;transform:translate(-50%,105%);transition:transform .5s cubic-bezier(.32,.72,0,1);will-change:transform;
+/* centred with margins, not a transform: an open sheet has no transform at all, otherwise iOS draws the text caret in the wrong place */
+.sheet{position:fixed;z-index:41;left:0;right:0;margin:0 auto;bottom:0;width:min(640px,100%);max-height:85vh;overflow:auto;transform:translateY(105%);transition:transform .5s cubic-bezier(.32,.72,0,1);
   border-radius:28px 28px 0 0;border-bottom:0;padding:8px max(20px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-right,0px))}
-.sheet.on{transform:translate(-50%,0)}
+.sheet.on{transform:none}
 .sheet,.picklist{overscroll-behavior:contain}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
 .sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column}
@@ -954,7 +955,7 @@ scrimEl.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
    the dimming fades with it, and on release it glides away or springs back depending on distance and speed */
 let sdr=null;
 const EASE="cubic-bezier(.32,.72,0,1)";
-function sheetPos(y){sheetEl.style.transform=`translate(-50%,${y}px)`;scrimEl.style.opacity=String(Math.max(0,1-y/(sheetEl.offsetHeight||1)))}
+function sheetPos(y){sheetEl.style.transform=y?`translateY(${y}px)`:"none";scrimEl.style.opacity=String(Math.max(0,1-y/(sheetEl.offsetHeight||1)))}
 sheetEl.addEventListener("touchstart",e=>{const y=e.touches[0].clientY;sdr={y0:y,sc:e.target.closest(".picklist"),dy:0,on:false,pts:[[y,performance.now()]]}},{passive:true});
 sheetEl.addEventListener("touchmove",e=>{if(!sdr)return;const y=e.touches[0].clientY,dy=y-sdr.y0;
   if(!sdr.on){const top=sheetEl.scrollTop<=0&&(!sdr.sc||sdr.sc.scrollTop<=0);if(dy>4&&top){sdr.on=true;sdr.y0=y;sheetEl.style.transition="none";scrimEl.style.transition="none"}else if(Math.abs(dy)>4){sdr=null;return}else return}
