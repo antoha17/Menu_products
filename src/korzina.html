@@ -401,10 +401,10 @@ button.add-dish{text-align:left;cursor:pointer}
 /* no backdrop blur on sheets: iOS Safari misplaces the text caret in inputs inside a blurred layer; the dimmed scrim does the job */
 .sheet.glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)}
 .sheet,.picklist{overscroll-behavior:contain}
-.sheet.tall{display:flex;flex-direction:column;overflow:hidden;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
+.sheet.tall{display:flex;flex-direction:column;overflow:hidden;overflow:clip;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
 .sheet.tall.kbopen h3,.sheet.tall.kbopen .need,.sheet.tall.kbopen .grab{display:none}
 .sheet.tall.kbopen{padding-top:12px;padding-bottom:6px}
-.sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column}
+.sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;overflow:clip}
 .newprod{margin:6px 0 4px}
 .sheet.tall .picklist{flex:1;min-height:0;max-height:none;overflow:auto;-webkit-overflow-scrolling:touch}
 .grab{width:38px;height:5px;border-radius:99px;background:var(--muted);opacity:.45;margin:4px auto 14px}
@@ -1950,7 +1950,7 @@ function lockPage(on){const b=document.body;if(on&&lockY==null){lockY=scrollY;Ob
   else if(!on&&lockY!=null){const y=lockY;lockY=null;Object.assign(b.style,{position:"",top:"",left:"",right:"",width:""});scrollTo(0,y)}}
 function fitSheet(){const vv=window.visualViewport;if(!sheetEl.classList.contains("tall")){sheetEl.style.bottom="";sheetEl.style.height="";return}
   const vh=vv?vv.height:innerHeight,kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
-  sheetEl.classList.toggle("kbopen",kb>80);sheetEl.style.bottom=kb+"px";sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
+  sheetEl.classList.toggle("kbopen",kb>80);sheetEl.style.bottom=kb+"px";sheetEl.scrollTop=0;const sb=document.getElementById("sheetBody");if(sb)sb.scrollTop=0;sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
 if(window.visualViewport){visualViewport.addEventListener("resize",fitSheet);visualViewport.addEventListener("scroll",fitSheet)}
 /* the keyboard never covers the field being typed in: the page gets extra room at the bottom
    while the keyboard is up, and the field's card is scrolled just above the keyboard */
@@ -1960,7 +1960,7 @@ function keepVisible(){const vv=window.visualViewport,el=document.activeElement;
   const box=(el.closest(".card")&&el.closest(".card").offsetHeight<vv.height*.6?el.closest(".card"):el).getBoundingClientRect();
   const bottom=vv.offsetTop+vv.height-12,top=vv.offsetTop+80;
   if(box.bottom>bottom)scrollBy({top:Math.min(box.bottom-bottom,box.top-top),behavior:"smooth"})}
-document.addEventListener("focusin",e=>{if(e.target.matches?.("input,textarea"))[150,450].forEach(ms=>setTimeout(keepVisible,ms))});
+document.addEventListener("focusin",e=>{if(e.target.closest?.(".sheet.tall"))[0,100,300,600].forEach(ms=>setTimeout(fitSheet,ms));if(e.target.matches?.("input,textarea"))[150,450].forEach(ms=>setTimeout(keepVisible,ms))});
 document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.pd&&UI.prodDraft&&t.tagName==="INPUT"){const k=t.dataset.pd;UI.prodDraft[k]=k==="name"?t.value:(t.value===""?"":+t.value);if(["kcal","p","f","c"].includes(k))delete UI.prodDraft.src;const el=document.getElementById("pdLine");if(el)el.innerHTML=prodLine(UI.prodDraft);return}
