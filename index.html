@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=e5698bb6">
+<link rel="manifest" href="manifest.webmanifest?v=c5ef4ea4">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1967,7 +1967,10 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.edm){const ed=UI.editor;ed.meals=MEALS.map(x=>x[0]).filter(m=>m===t.dataset.edm?t.checked:ed.meals.includes(m));return}
   if(t.dataset.ei!=null){const i=UI.editor.ingredients[+t.dataset.ei];i[t.dataset.f]=t.dataset.f==="qty"?(t.value===""?null:+t.value):t.value;if(t.dataset.f==="unit"&&t.value==="по вкусу")i.qty=null;if(t.dataset.f==="cat")i.catSet=true;if(t.dataset.f==="unit")render()}
 });
-document.addEventListener("touchmove",e=>{if(e.target.closest?.(".picklist")&&document.activeElement?.id==="pickQ")document.activeElement.blur()},{passive:true});
+/* like native apps: starting to scroll anywhere hides the keyboard (except when dragging inside the field being typed in) */
+{let ky=null;document.addEventListener("touchstart",e=>{ky=e.touches[0].clientY},{passive:true});
+ document.addEventListener("touchmove",e=>{const a=document.activeElement;if(ky==null||!a||!a.matches?.("input:not([type=checkbox]):not([type=range]),textarea"))return;
+   if(e.target===a||a.contains(e.target))return;if(Math.abs(e.touches[0].clientY-ky)>10){a.blur();ky=null}},{passive:true})}
 /* swipe the day card left/right to move to the next/previous day */
 {let ds=null;document.addEventListener("touchstart",e=>{const v=e.target.closest("#dayView");ds=v&&!e.target.closest(".stepper")?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null},{passive:true});
  document.addEventListener("touchend",e=>{if(!ds)return;const t=e.changedTouches[0],dx=t.clientX-ds.x,dy=t.clientY-ds.y;ds=null;
