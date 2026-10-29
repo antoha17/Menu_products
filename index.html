@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=574e269e">
+<link rel="manifest" href="manifest.webmanifest?v=01d4f17b">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -78,6 +78,7 @@ h3{font-size:17px;margin:0;font-weight:600}
 .btn.primary{background:var(--accent-fill);color:var(--accent-ink)}
 .btn.ghost{background:transparent;box-shadow:none;color:var(--accent)}
 .edbtns .btn{flex:1 1 0;padding:13px 10px}
+.btn.bkr{background:var(--fill);box-shadow:none}
 .card .btn:not(.primary):not(.ghost):not(.danger){background:var(--fill);box-shadow:none}
 .photob{border:1.5px solid var(--line)}
 .btn.danger{color:var(--beet)}
@@ -992,7 +993,7 @@ function vSettings(){
    <button class="disc" data-a="setToggle" data-k="data" aria-expanded="${!!op.data}"><b>Резервная копия</b><span class="val">${esc(backupAgo())}${ICON_CHEV}</span></button>
    ${op.data?`<div class="discbody">
     <p class="muted small" style="margin:0">Рецепты, меню и покупки хранятся только на этом телефоне. Копия — файл, который можно сохранить в «Файлы» или iCloud Drive и восстановить на любом устройстве.</p>
-    <div class="row"><button class="btn primary" data-a="backupSave">Сохранить копию</button><label class="btn" for="restoreFile">Восстановить</label><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
+    <div class="row edbtns"><button class="btn primary" data-a="backupSave">Сохранить копию</button><label class="btn bkr" for="restoreFile">Восстановить</label><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
     ${msgHtml("data")}</div>`:""}
   </div>`;
 }

@@ -66,6 +66,7 @@ h3{font-size:17px;margin:0;font-weight:600}
 .btn.primary{background:var(--accent-fill);color:var(--accent-ink)}
 .btn.ghost{background:transparent;box-shadow:none;color:var(--accent)}
 .edbtns .btn{flex:1 1 0;padding:13px 10px}
+.btn.bkr{background:var(--fill);box-shadow:none}
 .card .btn:not(.primary):not(.ghost):not(.danger){background:var(--fill);box-shadow:none}
 .photob{border:1.5px solid var(--line)}
 .btn.danger{color:var(--beet)}
@@ -980,7 +981,7 @@ function vSettings(){
    <button class="disc" data-a="setToggle" data-k="data" aria-expanded="${!!op.data}"><b>Резервная копия</b><span class="val">${esc(backupAgo())}${ICON_CHEV}</span></button>
    ${op.data?`<div class="discbody">
     <p class="muted small" style="margin:0">Рецепты, меню и покупки хранятся только на этом телефоне. Копия — файл, который можно сохранить в «Файлы» или iCloud Drive и восстановить на любом устройстве.</p>
-    <div class="row"><button class="btn primary" data-a="backupSave">Сохранить копию</button><label class="btn" for="restoreFile">Восстановить</label><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
+    <div class="row edbtns"><button class="btn primary" data-a="backupSave">Сохранить копию</button><label class="btn bkr" for="restoreFile">Восстановить</label><input type="file" id="restoreFile" accept=".json,application/json" hidden></div>
     ${msgHtml("data")}</div>`:""}
   </div>`;
 }
