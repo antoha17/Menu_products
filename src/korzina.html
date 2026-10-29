@@ -42,7 +42,7 @@ body{min-height:100vh;min-height:100lvh}
 
 .wrap{position:relative;z-index:1;margin-bottom:var(--kb,0px);max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 calc(120px + env(safe-area-inset-bottom,0px))}
 .wrap.wide{max-width:1120px}
-.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin:0 -16px;padding:16px 16px 8px;border-radius:0 0 18px 18px;border-top:0;transition:background .2s,box-shadow .2s,border-color .2s}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;margin:0 -16px;padding:6px 16px 4px;border-radius:0 0 18px 18px;border-top:0;transition:background .2s,box-shadow .2s,border-color .2s}
 .topbar:not(.on){background:transparent;box-shadow:none;border-color:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
 .topbar .t{text-align:center;font-weight:600;font-size:17px;opacity:0;transition:opacity .2s}
 .topbar.on .t{opacity:1}
@@ -55,7 +55,7 @@ h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin:0 0 2px;line-heig
 h2{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0;text-wrap:balance}
 h3{font-size:17px;margin:0;font-weight:600}
 .lede{color:var(--muted);margin:4px 0 0;max-width:62ch;font-size:15px}
-.sechead{margin:4px 0 16px}
+.sechead{margin:-4px 0 16px}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
 .muted{color:var(--muted)}
 .small{font-size:13px}
@@ -79,7 +79,7 @@ h3{font-size:17px;margin:0;font-weight:600}
 .tab:focus,.gear:focus,.btn:focus{outline:none}
 .tab:focus-visible,.gear:focus-visible,.btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 
-input[type=text],input[type=number],input[type=url],input[type=password],select,textarea{background:var(--fill);border:0;border-radius:12px;padding:11px 12px;min-width:0;color:var(--ink);font-size:16px}
+input[type=text],input[type=number],input[type=url],input[type=password],select,textarea{background:var(--fill);border:0;border-radius:12px;padding:11px 12px;min-width:0;color:var(--ink);font-size:16px;line-height:1.3;font-family:inherit}
 select{appearance:none;-webkit-appearance:none;padding-right:30px;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 16px) 52%,calc(100% - 11px) 52%;background-size:5px 5px;background-repeat:no-repeat}
 textarea{width:100%;resize:vertical;min-height:150px;line-height:1.45}
 .field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
@@ -194,7 +194,7 @@ button.qty{cursor:pointer}
 .searchf{width:100%;box-sizing:border-box;margin:0 0 10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 6px;padding:2px 0 8px}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;white-space:nowrap;border:0;border-radius:999px;padding:8px 13px;background:var(--fill);color:var(--ink);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.chip{flex:none;white-space:nowrap;border:0;border-radius:999px;padding:7px 11px;background:var(--fill);color:var(--ink);font:inherit;font-size:14px;font-weight:500;cursor:pointer}
 .chip[aria-checked="true"]{background:var(--accent-fill);color:var(--accent-ink)}
 .chip:focus,.chip:focus-visible,.pk:focus{outline:none}
 .addcard{margin-bottom:16px}
@@ -1241,9 +1241,8 @@ function vSheet(){
     const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
     return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Рецепт или продукт" aria-label="Рецепт или продукт" autocomplete="off" value="${esc(UI.pickQ||"")}">
-     ${catChips(list,cur,"pickCat")}
-     <div id="pickFoods">${foodsHtml(UI.pickQ||"")}</div>
-     <div class="picklist" id="pickList">${catSections(list,cur,q,row,"sgroup")}</div>
+     <div id="pickChips"${q?" hidden":""}>${catChips(list,cur,"pickCat")}</div>
+     <div class="picklist" id="pickList">${catSections(list,q?"":cur,q,row,"sgroup")}<div id="pickFoods">${foodsHtml(UI.pickQ||"")}</div></div>
      <p class="muted small" id="pickNone"${list.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
   }
   if(s.t==="slots"){const sl=UI.slots||[];const r=rById(UI.sel);
@@ -1944,7 +1943,7 @@ document.body.addEventListener("input",e=>{
   const t=e.target;
   if(t.dataset.pd&&UI.prodDraft&&t.tagName==="INPUT"){const k=t.dataset.pd;UI.prodDraft[k]=k==="name"?t.value:(t.value===""?"":+t.value);if(["kcal","p","f","c"].includes(k))delete UI.prodDraft.src;const el=document.getElementById("pdLine");if(el)el.innerHTML=prodLine(UI.prodDraft);return}
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src;return}
-  if(t.id==="pickQ"){UI.pickQ=t.value;const fh=foodsHtml(t.value);document.getElementById("pickFoods").innerHTML=fh;document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0||!!fh;return}
+  if(t.id==="pickQ"){UI.pickQ=t.value;const fh=foodsHtml(t.value);document.getElementById("pickFoods").innerHTML=fh;document.getElementById("pickChips").hidden=!!t.value.trim();document.getElementById("pickNone").hidden=filterRows(document.getElementById("pickList"),t.value)>0||!!fh;return}
   if(t.id==="recQ"){UI.recQ=t.value;document.getElementById("recNone").hidden=filterRows(document.getElementById("recList"),t.value)>0;return}
   if(t.id==="accHue"){setAcc(Object.assign(getAcc(),{h:+t.value}));return}
   if(t.id==="hue"){setPal({id:"custom",h:+t.value});document.querySelectorAll("[data-a=pal]").forEach(x=>x.setAttribute("aria-checked","false"));return}
