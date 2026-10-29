@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=312e1b1e">
+<link rel="manifest" href="manifest.webmanifest?v=01bcaa0d">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -231,6 +231,19 @@ button.qty{cursor:pointer}
 .item.home .nm{color:var(--muted)}
 .homeline{margin:10px 0 0;font-size:13px;color:var(--muted)}
 .bkb{background:var(--accent-soft)}
+.star{width:16px;height:16px;flex:none}
+.favchip{display:inline-flex;align-items:center;gap:5px}
+.favchip .star{width:14px;height:14px}
+.chip:not([aria-checked="true"]).favchip .star{color:var(--warn)}
+.favm{display:inline-flex;vertical-align:-2px;margin-right:6px;color:var(--warn)}
+.favm .star{width:14px;height:14px}
+.ritem .favm svg,.pk .favm svg{color:var(--warn);width:14px;height:14px}
+.iconb2{padding:8px 11px}
+.iconb2 .shi{margin:0}
+.favb{padding:8px 11px;color:var(--muted)}
+.favb.on,.favwide.on{color:var(--warn)}
+.favwide{gap:8px;margin-top:4px}
+.favwide .star{width:18px;height:18px}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
 .homecount span{margin-left:auto;font-weight:500;font-size:13px}
@@ -712,9 +725,11 @@ function guessDish(name){const n=low(name||"");for(const [c,re] of DISH_RULES)if
 function dishOf(r){return (r.dish||"").trim()||guessDish(r.name)}
 function dishCats(){const own=[...new Set(S.recipes.map(dishOf))].filter(c=>!DISH_CATS.includes(c)).sort((a,b)=>a.localeCompare(b,"ru"));return [...DISH_CATS.slice(0,-1),...own,"Другое"]}
 /* chips + grouped list shared by the recipes tab and the dish picker; search filters rows in place */
-function catChips(list,cur,act){const cnt={};list.forEach(r=>{const c=dishOf(r);cnt[c]=(cnt[c]||0)+1});if(Object.keys(cnt).length<2)return"";
-  return `<div class="chips" role="radiogroup" aria-label="Разделы"><button class="chip" role="radio" aria-checked="${!cur}" data-a="${act}" data-v="">Все · ${list.length}</button>${dishCats().filter(c=>cnt[c]).map(c=>`<button class="chip" role="radio" aria-checked="${cur===c}" data-a="${act}" data-v="${esc(c)}">${esc(c)} · ${cnt[c]}</button>`).join("")}</div>`}
-function catSections(list,cur,q,row,cls){return dishCats().filter(c=>!cur||c===cur).map(c=>{const rs=list.filter(r=>dishOf(r)===c);if(!rs.length)return"";
+const starIcon=on=>`<svg class="star" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="${on?"currentColor":"none"}" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`;
+function catChips(list,cur,act){const cnt={};list.forEach(r=>{const c=dishOf(r);cnt[c]=(cnt[c]||0)+1});const fav=list.filter(r=>r.fav).length;if(Object.keys(cnt).length<2&&!fav)return"";
+  return `<div class="chips" role="radiogroup" aria-label="Разделы">${fav?`<button class="chip favchip" role="radio" aria-checked="${cur==="__fav"}" data-a="${act}" data-v="__fav">${starIcon(true)}Избранное · ${fav}</button>`:""}<button class="chip" role="radio" aria-checked="${!cur}" data-a="${act}" data-v="">Все · ${list.length}</button>${dishCats().filter(c=>cnt[c]).map(c=>`<button class="chip" role="radio" aria-checked="${cur===c}" data-a="${act}" data-v="${esc(c)}">${esc(c)} · ${cnt[c]}</button>`).join("")}</div>`}
+function catSections(list,cur,q,row,cls){if(cur==="__fav"){list=list.filter(r=>r.fav);cur=""}list=list.slice().sort((a,b)=>!!b.fav-!!a.fav);
+  return dishCats().filter(c=>!cur||c===cur).map(c=>{const rs=list.filter(r=>dishOf(r)===c);if(!rs.length)return"";
   const vis=rs.filter(r=>!q||low(r.name).includes(q)).length;
   return `<section class="rsec"${vis?"":" hidden"}><div class="gtitle">${esc(c)}</div><div class="${cls}">${rs.map(r=>row(r,!q||low(r.name).includes(q))).join("")}</div></section>`}).join("")}
 function filterRows(box,q){q=low(q);let n=0;box.querySelectorAll(".rsec").forEach(sec=>{let k=0;sec.querySelectorAll("[data-s]").forEach(r=>{const on=!q||r.dataset.s.includes(q);r.hidden=!on;if(on)k++});sec.hidden=!k;n+=k});return n}
@@ -1008,12 +1023,12 @@ function vSettings(){
 
 /* ---------- Recipes ---------- */
 function vRecipes(){
-  const sel=UI.sel&&rById(UI.sel);const N=S.recipes.length;const q=low(UI.recQ||"");const cur=UI.recCat&&S.recipes.some(r=>dishOf(r)===UI.recCat)?UI.recCat:"";
+  const sel=UI.sel&&rById(UI.sel);const N=S.recipes.length;const q=low(UI.recQ||"");const cur=UI.recCat==="__fav"&&S.recipes.some(r=>r.fav)?"__fav":UI.recCat&&S.recipes.some(r=>dishOf(r)===UI.recCat)?UI.recCat:"";
   const meta=r=>{const n=recipeNut(r);return `<span class="rmeta num"><span>${trim(n.kcal,0)} ккал/порц.</span><span>${r.servings} порц.</span></span>`};
   const row=(r,on)=>UI.pick?`<label class="ritem pickrow" data-s="${esc(low(r.name))}"${on?"":" hidden"}><input type="checkbox" data-pick="${esc(r.id)}"${UI.pick.includes(r.id)?" checked":""}><span class="t">${esc(r.name)}</span>${meta(r)}</label>`
-    :`<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"} aria-expanded="${UI.sel===r.id&&!UI.editor}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span>${meta(r)}${ICON_CHEV}</button>${UI.sel===r.id&&!UI.editor?`<div class="rinline" data-s="${esc(low(r.name))}"${on?"":" hidden"}>${vRecipe(r)}</div>`:""}`;
+    :`<button class="ritem" data-a="openRecipe" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"} aria-expanded="${UI.sel===r.id&&!UI.editor}" aria-current="${UI.sel===r.id&&!UI.editor}"><span class="t">${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}${r.example?'<span class="tag">пример</span>':""}</span>${meta(r)}${ICON_CHEV}</button>${UI.sel===r.id&&!UI.editor?`<div class="rinline" data-s="${esc(low(r.name))}"${on?"":" hidden"}>${vRecipe(r)}</div>`:""}`;
   const list=N?`<input type="text" enterkeyhint="search" id="recQ" class="searchf" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.recQ||"")}">
-   ${catChips(S.recipes,cur,"recCat")}<div id="recList">${catSections(S.recipes,cur,q,row,"group")}</div><p class="muted small" id="recNone"${S.recipes.some(r=>(!cur||dishOf(r)===cur)&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`:"";
+   ${catChips(S.recipes,cur,"recCat")}<div id="recList">${catSections(S.recipes,cur,q,row,"group")}</div><p class="muted small" id="recNone"${S.recipes.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`:"";
   const top=UI.editor?vEditor():!UI.pick&&(UI.adding||!N)?vImport():"";
   const word=N%10===1&&N%100!==11?"рецепт":[2,3,4].includes(N%10)&&![12,13,14].includes(N%100)?"рецепта":"рецептов";
   return `<div class="sechead"><h1>Рецепты</h1><p class="sub">${UI.pick?`Отметьте рецепты для удаления · выбрано ${UI.pick.length}`:N+" "+word}</p></div>
@@ -1086,7 +1101,7 @@ function vRecipe(r){
   const nAdd=UI.addServ||S.plan.people;
   const byCat={};r.ingredients.forEach(i=>{const c=CATS.includes(i.cat)?i.cat:"Другое";(byCat[c]=byCat[c]||[]).push(i)});
   return `<div class="rhead"><div><h2>${esc(r.name)}</h2><p class="muted small" style="margin:4px 0 0">${r.source?`<a href="${esc(r.source)}" target="_blank" rel="noopener" style="color:var(--accent)">рецепт на сайте ↗</a>`:""}</p></div>
-   <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm" data-a="shareRecipe"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg>Поделиться</button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button></div></div>
+   <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm iconb2" data-a="shareRecipe" aria-label="Поделиться"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg></button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button><button class="btn sm favb${r.fav?" on":""}" data-a="favToggle" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="${r.fav?"Убрать из избранного":"В избранное"}">${starIcon(r.fav)}</button></div></div>
   <p class="nutl"><b>${trim(nut.kcal,0)} ккал/порц.</b> · Б ${trim(nut.p,0)} · Ж ${trim(nut.f,0)} · У ${trim(nut.c,0)}</p>${nut.miss.length?`<p class="nutmiss">Без ккал: ${esc(nut.miss.join(", "))} — нажмите на продукт, чтобы указать</p>`:""}
   <div class="row" style="margin-top:16px;justify-content:space-between"><span class="muted">Пересчитать на</span><span class="stepper"><button data-a="scale" data-d="-1" aria-label="Меньше порций">−</button><span class="v" style="min-width:6.5em">${n} ${servWord(n)}</span><button data-a="scale" data-d="1" aria-label="Больше порций">+</button></span></div>
   <ul class="ings" style="margin-top:16px">${r.ingredients.map((i,ix)=>[i,ix]).sort((a,b)=>CATS.indexOf(CATS.includes(a[0].cat)?a[0].cat:"Другое")-CATS.indexOf(CATS.includes(b[0].cat)?b[0].cat:"Другое")).map(([i,ix])=>`<li><button class="ingb" data-a="ingOpen" data-id="${esc(r.id)}" data-i="${ix}"><span class="n${i.unit!=="по вкусу"&&!perShown(i)?" nwarn":""}">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}${ICON_CHEV}</span></button></li>`).join("")}</ul>
@@ -1194,13 +1209,13 @@ function vSheet(){
   if(s.t==="pick"){
     const [d,m]=s.k.split("-");const q=low(UI.pickQ||"");
     const list=S.recipes.slice().sort((a,b)=>(b.used||0)-(a.used||0)||a.name.localeCompare(b.name,"ru"));
-    const cur=UI.pickCat&&list.some(r=>dishOf(r)===UI.pickCat)?UI.pickCat:"";
-    const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
+    const cur=UI.pickCat==="__fav"&&list.some(r=>r.fav)?"__fav":UI.pickCat&&list.some(r=>dishOf(r)===UI.pickCat)?UI.pickCat:"";
+    const row=(r,on)=>`<button class="pk" data-a="pickAdd" data-id="${esc(r.id)}" data-s="${esc(low(r.name))}"${on?"":" hidden"}><span>${r.fav?`<span class="favm">${starIcon(true)}</span>`:""}${esc(r.name)}</span><span class="m">${trim(recipeNut(r).kcal,0)} ккал</span></button>`;
     return `<h3>Добавить блюдо</h3><p class="need">${DAYS[+d]}, ${MEAL_NAME[m]}</p>
      <input type="text" enterkeyhint="search" id="pickQ" class="searchf" placeholder="Найти рецепт" aria-label="Найти рецепт" autocomplete="off" value="${esc(UI.pickQ||"")}">
      ${catChips(list,cur,"pickCat")}
      <div class="picklist" id="pickList">${catSections(list,cur,q,row,"sgroup")}</div>
-     <p class="muted small" id="pickNone"${list.some(r=>(!cur||dishOf(r)===cur)&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
+     <p class="muted small" id="pickNone"${list.some(r=>(!cur||(cur==="__fav"?r.fav:dishOf(r)===cur))&&(!q||low(r.name).includes(q)))?" hidden":""}>Ничего не найдено.</p>`;
   }
   if(s.t==="slots"){const sl=UI.slots||[];const r=rById(UI.sel);
     return `<h3>${r?esc(r.name):"Добавить в меню"}</h3><p class="need">Отметьте дни и приёмы пищи</p>
@@ -1234,7 +1249,8 @@ function vSheet(){
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
     return `<h3>${esc(r.name)}</h3><p class="need">${DAYS[x.d]}, ${MEAL_NAME[x.m]} · ${servShort(x.e.servings)}</p>
-     <div class="lbl"><label for="mv-${x.e.id}">Перенести на другой период</label></div>
+     <button class="btn wide favwide${r.fav?" on":""}" data-a="favToggle" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}">${starIcon(r.fav)}${r.fav?"В избранном":"В избранное"}</button>
+     <div class="lbl" style="margin-top:14px"><label for="mv-${x.e.id}">Перенести на другой период</label></div>
      <select id="mv-${x.e.id}" data-move="${x.e.id}"><option value="">Выберите день…</option>${DAYS.map((dd,di)=>MEALS.map(([m,ml])=>di+"-"+m===x.k?"":`<option value="${di}-${m}">${DAYS_S[di]}, ${ml.toLowerCase()}</option>`).join("")).join("")}</select>
      <div class="cta"><button class="btn danger" data-a="rmDish" data-id="${x.e.id}">Убрать из меню</button><button class="btn primary" data-a="closeSheet">Готово</button></div>`;
   }
@@ -1780,6 +1796,7 @@ document.body.addEventListener("click",e=>{
       saveRecipe(r);UI.sheet=null;render();break}
     case "scanOpen":UI.msg.scan={t:""};UI.sheet={t:"scan",ix:+b.dataset.i,st:"cam"};render();startScan();break;
     case "scanManual":{const ix=UI.sheet?.ix;if(UI.sheet?.rid){UI.sheet={t:"ing",rid:UI.sheet.rid,ix};render();break}UI.sheet=null;if(UI.editor)UI.editor.nutOpen=Object.assign({},UI.editor.nutOpen,{[ix]:true});render();break}
+    case "favToggle":{const r=rById(b.dataset.id);if(!r)return;materialize();r.fav=!r.fav;if(!r.fav)delete r.fav;saveRecipe(r);UI.lastSh=null;render();break}
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
