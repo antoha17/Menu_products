@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=3769c06b">
+<link rel="manifest" href="manifest.webmanifest?v=285efb9a">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -410,6 +410,9 @@ button.add-dish{text-align:left;cursor:pointer}
   border-radius:28px 28px 0 0;border-bottom:0;padding:8px max(20px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-right,0px))}
 .sheet.on{transform:translate(-50%,0)}
 .sheet,.picklist{overscroll-behavior:contain}
+.sheet.tall{display:flex;flex-direction:column;overflow:hidden;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
+.sheet.tall #sheetBody{flex:1;min-height:0;display:flex;flex-direction:column}
+.sheet.tall .picklist{flex:1;min-height:0;max-height:none;overflow:auto;-webkit-overflow-scrolling:touch}
 .grab{width:38px;height:5px;border-radius:99px;background:var(--muted);opacity:.45;margin:4px auto 14px}
 .sheet h3{font-size:22px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em}
 .sheet .need{color:var(--muted);font-size:15px;margin:0 0 16px}
@@ -551,7 +554,8 @@ const FOODS=FOODS_RAW.split("\n").filter(l=>l&&l[0]!=="#").map(l=>{const [name,k
   return {name,low:low(name),per100:{kcal:+kcal,p:+p,f:+f,c:+c},portion:+por,unit,cat:CATS[+cat]||"Другое"}});
 function foodOf(name){const n=low((name||"").trim());if(!n)return null;return FOODS.find(f=>f.low===n)||null}
 function foodsMatch(q,max){q=low(q.trim());if(q.length<2)return[];const words=q.split(/\s+/);
-  return FOODS.filter(f=>words.every(w=>f.low.includes(w))).sort((a,b)=>(b.low.startsWith(q)-a.low.startsWith(q))||a.name.length-b.name.length).slice(0,max)}
+  /* each typed word must start a word of the name: "ке" finds Кефир, not Крекер */
+  return FOODS.filter(f=>{const fw=f.low.split(/[\s,()%-]+/);return words.every(w=>fw.some(x=>x.startsWith(w)))}).sort((a,b)=>(b.low.startsWith(q)-a.low.startsWith(q))||a.name.length-b.name.length).slice(0,max)}
 const baseOf=name=>DICT.find(d=>d.re.test(low(name)))||null;
 const prodKey=(name,base)=>low((base&&base.canon)||name);
 const lkCache=new Map();
@@ -985,7 +989,7 @@ function render(){
   if(sh!==UI.lastSh){document.getElementById("sheetBody").innerHTML=sh;UI.lastSh=sh}
   /* none of the text fields is a contact form: keep iOS from offering contacts, e-mails or passwords */
   document.querySelectorAll('input[type=text],input[type=search],input[type=url],input:not([type]),textarea').forEach(i=>{if(i.id!=="aiKey"){i.setAttribute("autocomplete","off");i.setAttribute("data-form-type","other")}});
-  sheetEl.classList.toggle("on",!!sh);scrimEl.classList.toggle("on",!!sh);document.documentElement.classList.toggle("sheet-open",!!sh);
+  sheetEl.classList.toggle("on",!!sh);sheetEl.classList.toggle("tall",UI.sheet?.t==="pick");fitSheet();scrimEl.classList.toggle("on",!!sh);document.documentElement.classList.toggle("sheet-open",!!sh);
   if(!sh)UI.sheet=null;
   let toast=document.getElementById("toast");
   if(!toast){toast=document.createElement("div");toast.id="toast";toast.className="toast glass";toast.setAttribute("role","status");document.body.appendChild(toast)}
@@ -1942,6 +1946,12 @@ document.addEventListener("touchend",()=>{if(!swp)return;const {it,dx,on}=swp;sw
 function fixViewport(){setTimeout(()=>{const y=scrollY;scrollTo(scrollX,y+1);scrollTo(scrollX,y)},60)}
 document.addEventListener("focusout",e=>{if(e.target.matches?.("input,textarea,select")){document.documentElement.style.setProperty("--kb","0px");fixViewport();setTimeout(()=>{if(!document.activeElement?.matches?.("input,textarea"))document.documentElement.style.setProperty("--kb","0px")},400)}});
 if(window.visualViewport){let h=visualViewport.height;visualViewport.addEventListener("resize",()=>{if(visualViewport.height>h+80)fixViewport();h=visualViewport.height;keepVisible()})}
+/* the dish picker keeps one height while you type and sits right above the keyboard,
+   so the search field never jumps or hides behind it; results scroll inside */
+function fitSheet(){const vv=window.visualViewport;if(!sheetEl.classList.contains("tall")){sheetEl.style.bottom="";sheetEl.style.height="";return}
+  const vh=vv?vv.height:innerHeight,kb=vv?Math.max(0,innerHeight-vv.height-vv.offsetTop):0;
+  sheetEl.style.bottom=kb+"px";sheetEl.style.height=Math.round(Math.min(innerHeight*.85,vh-12))+"px"}
+if(window.visualViewport){visualViewport.addEventListener("resize",fitSheet);visualViewport.addEventListener("scroll",fitSheet)}
 /* the keyboard never covers the field being typed in: the page gets extra room at the bottom
    while the keyboard is up, and the field's card is scrolled just above the keyboard */
 function keepVisible(){const vv=window.visualViewport,el=document.activeElement;
