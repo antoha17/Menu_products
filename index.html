@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=c768b86c">
+<link rel="manifest" href="manifest.webmanifest?v=dc6f6388">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -422,7 +422,8 @@ button.add-dish{text-align:left;cursor:pointer}
 .sheet.glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)}
 .sheet,.picklist{overscroll-behavior:contain}
 /* a short filtered list must not shrink the page under the fixed bars */
-#recList,#dayView{min-height:calc(100lvh - 200px)}
+#recList{min-height:calc(100lvh - 200px)}
+.wrap{min-height:calc(100lvh - 40px)}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;overflow:clip;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
 .sheet.tall{top:0;bottom:0;height:auto;max-height:none;width:100%;border-radius:0;padding-top:calc(env(safe-area-inset-top,0px) + 26px)}
 .sheet.tall .grab{display:none}

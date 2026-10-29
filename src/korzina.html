@@ -410,7 +410,8 @@ button.add-dish{text-align:left;cursor:pointer}
 .sheet.glass{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--bg)}
 .sheet,.picklist{overscroll-behavior:contain}
 /* a short filtered list must not shrink the page under the fixed bars */
-#recList,#dayView{min-height:calc(100lvh - 200px)}
+#recList{min-height:calc(100lvh - 200px)}
+.wrap{min-height:calc(100lvh - 40px)}
 .sheet.tall{display:flex;flex-direction:column;overflow:hidden;overflow:clip;max-height:none;transition:transform .5s cubic-bezier(.32,.72,0,1),bottom .25s,height .25s}
 .sheet.tall{top:0;bottom:0;height:auto;max-height:none;width:100%;border-radius:0;padding-top:calc(env(safe-area-inset-top,0px) + 26px)}
 .sheet.tall .grab{display:none}
