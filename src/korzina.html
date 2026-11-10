@@ -251,6 +251,16 @@ button.qty{cursor:pointer}
 .favb.on,.favwide.on{color:var(--warn)}
 .favwide{gap:8px;margin-top:4px}
 .favwide .star{width:18px;height:18px}
+.microbtn{display:flex;justify-content:space-between;align-items:center;width:100%;padding:6px 0 2px;border:0;background:transparent;color:var(--muted);font:inherit;font-size:14px;cursor:pointer}
+.microbtn .ms{display:flex;align-items:center;gap:4px;color:var(--ink);font-weight:500}
+.microbtn svg{width:13px;height:13px;color:var(--muted)}
+.mlist{display:flex;flex-direction:column;gap:12px}
+.mrow .mh{display:flex;justify-content:space-between;gap:10px;font-size:15px;margin-bottom:5px}
+.mrow .mv{color:var(--muted);font-variant-numeric:tabular-nums;font-size:14px;text-align:right}
+.mrow .mv.ok{color:var(--accent)}
+.mrow .mv.low{color:var(--warn)}
+.mrow .mv.over{color:var(--beet)}
+.ntab small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
 .homecount span{margin-left:auto;font-weight:500;font-size:13px}
@@ -800,6 +810,38 @@ function dayBar(k){const n=normOf();if(!n)return"";const st=normState(k)||"under
 function normTag(k){const n=normOf();if(!n||k==null)return"";const d=k-n;
   if(Math.abs(d)<=n*.1)return `<span class="norm ok">в норме</span>`;
   return d>0?`<span class="norm over">перебор ${trim(d,0)}</span>`:`<span class="norm under">недобор ${trim(-d,0)}</span>`}
+/* ---------- vitamins & minerals: built-in table, AI values for unknown products, rough by design ---------- */
+const MICRO_RAW=/*MICRO*/"";
+const MKEYS=[["prot","Белок","г"],["fib","Клетчатка","г"],["na","Натрий","мг"],["k","Калий","мг"],["mg","Магний","мг"],["ca","Кальций","мг"],["fe","Железо","мг"],["c","Витамин C","мг"]];
+const MICRO=new Map(MICRO_RAW.split("\n").filter(l=>l&&l[0]!=="#").map(l=>{const [n,...v]=l.split(";");const [fib,na,k,mg,ca,fe,c]=v.map(Number);return [low(n),{fib,na,k,mg,ca,fe,c}]}));
+const MICRO_NAMES=[...MICRO.keys()];
+/* exact catalogue name, the owner's/AI values, or the closest catalogue product starting with the same word */
+const MALIAS=[[/масло (для жарки|растит|рафин)/,"масло подсолнечное"],[/(кур\S* филе|филе кур|куриц)/,"курица, грудка"],[/^творог/,"творог 5%"],[/^сметан/,"сметана 15%"],
+ [/^молоко$/,"молоко 2,5%"],[/^кефир$/,"кефир 2,5%"],[/^сливк/,"сливки 20%"],[/^сыр$|сыр тв[её]рд/,"сыр твёрдый"],[/^(говядин|говяж)/,"говядина"],[/^(свинин|свин)/,"свинина"],[/^фарш/,"фарш домашний"],[/^рис\b/,"рис белый"],[/^(яйц|яйко)/,"яйцо куриное"],[/^сахар/,"сахар"]];
+function microOf(i){if(i.micro)return i.micro;const n=low((i.name||"").trim());if(MICRO.has(n))return MICRO.get(n);
+  const d=lookup(i.name||"");const c=d?.canon&&low(d.canon);if(c&&MICRO.has(c))return MICRO.get(c);
+  /* common generic names → a typical catalogue product */
+  for(const [re,to] of MALIAS)if(re.test(n))return MICRO.get(to);
+  /* a word of the name, by its first letters: the catalogue's main word wins over a word further in ("Пармезан" → сыр пармезан) */
+  const ws=n.split(/[\s,()%-]+/).filter(x=>x.length>=4);
+  for(const pass of [0,1])for(const w of ws){const stem=w.slice(0,Math.max(4,Math.min(6,w.length-2)));
+    const cand=MICRO_NAMES.filter(x=>{const xs=x.split(/[\s,()%-]+/);return pass?xs.some(y=>y.startsWith(stem)):xs[0].startsWith(stem)}).sort((a,b)=>a.length-b.length);if(cand.length)return MICRO.get(cand[0])}
+  return null}
+function recipeMicro(r){const t={prot:0,fib:0,na:0,k:0,mg:0,ca:0,fe:0,c:0};const miss=[];
+  for(const i of r.ingredients){const g=ingGrams(i,1);if(!g)continue;const m=microOf(i),P=perShown(i);if(P)t.prot+=P.p*g/100;
+    if(!m){miss.push(i.name);continue}for(const k of ["fib","na","k","mg","ca","fe","c"])t[k]+=(+m[k]||0)*g/100}
+  const s=r.servings||1;for(const k in t)t[k]/=s;return {t,miss}}
+function dayMicro(d){const t={prot:0,fib:0,na:0,k:0,mg:0,ca:0,fe:0,c:0};let ok=false;
+  for(const x of entries(S.plan.week).filter(x=>x.d===d)){const r=rById(x.e.rid);if(!r)continue;const m=recipeMicro(r).t;for(const k in t)t[k]+=m[k]*x.e.servings;ok=true}return ok?t:null}
+/* daily needs by sex and age — general guidance for healthy adults */
+function microNorms(){const sx=S.plan.sex,a=+S.plan.age||35;if(!sx)return null;const f=sx==="f";
+  return {prot:f?60:75,fib:f?25:30,na:2000,k:3500,mg:f?320:420,ca:(f&&a>50)||a>70?1200:1000,fe:f&&a<50?18:10,c:f?90:100}}
+function microNote(k){const sx=S.plan.sex,a=+S.plan.age||35,f=sx==="f";
+  if(k==="fe")return f&&a<50?"женщинам до 50 лет нужно почти вдвое больше, чем мужчинам":f?"после 50 лет потребность снижается":"";
+  if(k==="mg")return f?"":"мужчинам нужно больше";if(k==="ca")return (f&&a>50)||a>70?"после 50 лет нужно больше для костей":"";if(k==="na")return "не больше — около 5 г соли";return ""}
+function microState(k,v,n){if(k==="na")return v>n?"over":"ok";const p=v/n;return p>=.8?"ok":p<.5?"low":""}
+function microSummary(t){const N=microNorms();if(!N||!t)return"";const n=MKEYS.filter(([k])=>microState(k,t[k],N[k])==="ok").length;
+  return `<button class="microbtn" data-a="microOpen"><span>Витамины и минералы</span><span class="ms">${n} из ${MKEYS.length} в норме${ICON_CHEV}</span></button>`}
 function dayKcal(week,d){
   let t=0,ok=false;
   for(const x of entries(week).filter(x=>x.d===d)){const r=rById(x.e.rid);if(!r)continue;t+=recipeNut(r).kcal*x.e.servings;ok=true}
@@ -1038,7 +1080,7 @@ function vWeek(){
   ${n?`<div class="actions"><button class="btn danger" data-a="clearWeek">Очистить меню</button></div>`:""}
   ${S.recipes.length?"":`<div class="banner"><span>Сначала добавьте рецепт на вкладке «Рецепты», потом его можно будет поставить на любой день.</span></div>`}
   ${dayStrip(W,today,kc)}
-  <div class="week" id="dayView">${DAYS.map((dn,di)=>di!==selDay(today)?"":`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${dayKcalHtml(kc[di])}</div>${dayBar(kc[di])}
+  <div class="week" id="dayView">${DAYS.map((dn,di)=>di!==selDay(today)?"":`<section class="day${di===today?" today":""}"><div class="dayname"><span>${dn}${di===today?'<span class="tod">сегодня</span>':""}</span>${dayKcalHtml(kc[di])}</div>${dayBar(kc[di])}${microSummary(dayMicro(di))}
    ${MEALS.map(([m,ml])=>{const key=di+"-"+m;const list=entries(W).filter(x=>x.k===key);
     return `<div class="meal"><div class="meal-label"><span>${ml}</span></div>${list.map(dish).join("")}${S.recipes.length?`<button class="mealrow" data-a="pickDish" data-k="${key}" aria-label="Добавить блюдо: ${dn}, ${ml}"><svg class="mplus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Добавить блюдо</button>`:""}</div>`}).join("")}
   </section>`).join("")}</div>`;
@@ -1072,6 +1114,11 @@ function vSettings(){
   <div class="group"><div class="ginner">
    <div class="field" style="margin:0"><label for="normIn">Норма калорий в день</label><input type="number" inputmode="numeric" id="normIn" min="0" step="50" value="${normOf()||""}" placeholder="не задана"></div>
    <p class="muted small" style="margin:8px 0 0">У каждого дня покажем, сколько запланировано из нормы. Зелёным — норма, красным — больше нормы. Чтобы не показывать, оставьте поле пустым.</p>
+   <div class="lbl" style="margin-top:16px">Витамины и минералы</div>
+   <div class="seg" role="radiogroup" aria-label="Пол">${[["","Не считать"],["f","Женщина"],["m","Мужчина"]].map(([v,l])=>`<button role="radio" aria-checked="${(S.plan.sex||"")===v}" data-a="sexSel" data-v="${v}">${l}</button>`).join("")}</div>
+   ${S.plan.sex?`<div class="field" style="margin-top:10px"><label for="ageIn">Возраст</label><input type="number" inputmode="numeric" id="ageIn" min="14" max="100" value="${S.plan.age||""}" placeholder="35"></div>
+   <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. При беременности, кормлении, больших нагрузках или болезнях нормы другие — уточните у врача.</p>
+   <div class="sgroup ntab">${MKEYS.map(([k,l,u])=>`<div><span>${l}${microNote(k)?`<small>${microNote(k)}</small>`:""}</span><span>${k==="na"?"до ":""}${trim(microNorms()[k],0)} ${u}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:8px 0 0">Укажите пол — у каждого дня в меню появится оценка витаминов и минералов.</p>`}
   </div></div>
   <div class="gtitle">Сервисы</div>
   <div class="group">
@@ -1174,7 +1221,7 @@ function vRecipe(r){
   const byCat={};r.ingredients.forEach(i=>{const c=CATS.includes(i.cat)?i.cat:"Другое";(byCat[c]=byCat[c]||[]).push(i)});
   return `<div class="rhead"><div><h2>${esc(r.name)}</h2><p class="muted small" style="margin:4px 0 0">${r.source?`<a href="${esc(r.source)}" target="_blank" rel="noopener" style="color:var(--accent)">рецепт на сайте ↗</a>`:""}</p></div>
    <div class="row"><button class="btn sm" data-a="edit" data-id="${esc(r.id)}">Изменить</button><button class="btn sm iconb2" data-a="shareRecipe" aria-label="Поделиться"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg></button><button class="btn sm ghost danger" data-a="delRecipe" data-id="${esc(r.id)}">Удалить</button><button class="btn sm favb${r.fav?" on":""}" data-a="favToggle" data-id="${esc(r.id)}" aria-pressed="${!!r.fav}" aria-label="${r.fav?"Убрать из избранного":"В избранное"}">${starIcon(r.fav)}</button></div></div>
-  <p class="nutl"><b>${trim(nut.kcal,0)} ккал/порц.</b> · Б ${trim(nut.p,0)} · Ж ${trim(nut.f,0)} · У ${trim(nut.c,0)}</p>${nut.miss.length?`<p class="nutmiss">Без ккал: ${esc(nut.miss.join(", "))} — нажмите на продукт, чтобы указать</p>`:""}
+  ${microNorms()?(()=>{const m=recipeMicro(r),N=microNorms();const top=MKEYS.filter(([k])=>k!=="na"&&k!=="prot").map(([k,l])=>[l,m.t[k]/N[k]]).sort((a,b)=>b[1]-a[1]).slice(0,3).filter(x=>x[1]>=.1);return top.length?`<p class="muted small" style="margin:6px 0 0">Порция даёт: ${top.map(([l,p])=>l.toLowerCase()+" "+Math.round(p*100)+"%").join(", ")} дневной нормы</p>`:""})():""}<p class="nutl"><b>${trim(nut.kcal,0)} ккал/порц.</b> · Б ${trim(nut.p,0)} · Ж ${trim(nut.f,0)} · У ${trim(nut.c,0)}</p>${nut.miss.length?`<p class="nutmiss">Без ккал: ${esc(nut.miss.join(", "))} — нажмите на продукт, чтобы указать</p>`:""}
   <div class="row" style="margin-top:16px;justify-content:space-between"><span class="muted">Пересчитать на</span><span class="stepper"><button data-a="scale" data-d="-1" aria-label="Меньше порций">−</button><span class="v" style="min-width:6.5em">${n} ${servWord(n)}</span><button data-a="scale" data-d="1" aria-label="Больше порций">+</button></span></div>
   <ul class="ings" style="margin-top:16px">${r.ingredients.map((i,ix)=>[i,ix]).sort((a,b)=>CATS.indexOf(CATS.includes(a[0].cat)?a[0].cat:"Другое")-CATS.indexOf(CATS.includes(b[0].cat)?b[0].cat:"Другое")).map(([i,ix])=>`<li><button class="ingb" data-a="ingOpen" data-id="${esc(r.id)}" data-i="${ix}"><span class="n${i.unit!=="по вкусу"&&!perShown(i)?" nwarn":""}">${esc(i.name)}</span><span class="q">${fmtIng(i,k)}${ICON_CHEV}</span></button></li>`).join("")}</ul>
   <div class="row" style="margin-top:10px"><span class="copied" id="copiedR"></span></div>
@@ -1329,6 +1376,14 @@ function vSheet(){
      <div class="cta"><button class="btn" data-a="closeSheet">Отмена</button><button class="btn primary" data-a="prodSave">${d.id?"Сохранить":s.k?"Добавить":"Сохранить"}</button></div>
      ${msgHtml("prod")}`;
   }
+  if(s.t==="micro"){const N=microNorms();if(!N)return"";const wk=!!UI.microWeek;let t;
+    if(wk){const ds=[0,1,2,3,4,5,6].map(dayMicro).filter(Boolean);t={};for(const [k] of MKEYS)t[k]=ds.length?ds.reduce((a,x)=>a+x[k],0)/ds.length:0}else t=dayMicro(UI.day??0)||{};
+    const rnd=(v,u)=>u==="г"?trim(v,0):v>=100?trim(Math.round(v/10)*10,0):trim(v,v<10?1:0);
+    return `<h3>Витамины и минералы</h3><p class="need">${wk?"В среднем за день по заполненным дням":DAYS[UI.day??0]}</p>
+     <div class="seg" style="margin:4px 0 12px" role="radiogroup"><button role="radio" aria-checked="${!wk}" data-a="microWk" data-v="">День</button><button role="radio" aria-checked="${wk}" data-a="microWk" data-v="1">Неделя</button></div>
+     <div class="mlist">${MKEYS.map(([k,l,u])=>{const v=t[k]||0,n=N[k],st=microState(k,v,n);return `<div class="mrow"><div class="mh"><span>${l}</span><span class="mv ${st}">≈ ${rnd(v,u)} / ${trim(n,0)} ${u}${st==="low"?" · мало":st==="over"?" · больше нормы":""}</span></div><div class="kbar ${st==="over"?"over":st==="ok"?"ok":"under"}"><i style="width:${Math.min(100,Math.round(v/n*100))}%"></i></div></div>`}).join("")}</div>
+     <p class="muted small" style="margin:12px 0 0">Оценка примерная (±20–30%): состав зависит от сорта, свежести и способа готовки. Нормы — для ${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет, меняются в ⚙ Настройках.</p>`;
+  }
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
     return `<h3>${esc(r.name)}</h3><p class="need">${DAYS[x.d]}, ${MEAL_NAME[x.m]} · ${servShort(x.e.servings)}</p>
@@ -1352,7 +1407,7 @@ function vLeftovers(lo,keeps){
 }
 
 /* ---------- Claude ---------- */
-const ING_SCHEMA=`{"name": string, "qty": number|null, "unit": string, "cat": string, "pantry": boolean, "pack": {"size": number, "unit": "г"|"мл"|"шт"|"зубч.", "name": string}|null, "per100": {"kcal": number, "p": number, "f": number, "c": number}|null, "gpp": number|null}`;
+const ING_SCHEMA=`{"name": string, "qty": number|null, "unit": string, "cat": string, "pantry": boolean, "pack": {"size": number, "unit": "г"|"мл"|"шт"|"зубч.", "name": string}|null, "per100": {"kcal": number, "p": number, "f": number, "c": number}|null, "micro": {"fib": number, "na": number, "k": number, "mg": number, "ca": number, "fe": number, "c": number}|null, "gpp": number|null}`;
 const RECIPE_SCHEMA=`{"name": string, "servings": number, "meals": ["b"|"l"|"d"], "dish": "${DISH_CATS.join("|")}", "ingredients": [${ING_SCHEMA}]}`;
 const RULES=`Правила для рецепта:
 - name — короткое название блюда на русском. servings — число порций, только если оно прямо написано в рецепте («на 4 порции», «для 6 человек», «Servings: 4»); если не написано, servings = null, не угадывай. meals — на какие приёмы пищи подходит: b завтрак, l обед, d ужин.
@@ -1363,6 +1418,7 @@ const RULES=`Правила для рецепта:
 - cat — одно из: ${CATS.join(", ")}.
 - pantry = true для соли, молотого перца, воды, сахара в малых количествах, растительного масла до 3 ст.л. и сухих специй.
 - pack — типичная упаковка в российском супермаркете: сметана 300 г «стакан», масло сливочное 180 г «пачка», яйца 10 шт «десяток», мука 1000 г «пачка», чеснок 10 зубч. «головка». null для продуктов на развес (овощи, мясо, рыба) и для pantry.
+- micro — на 100 г: клетчатка (г), натрий, калий, магний, кальций, железо, витамин C (мг) по стандартным таблицам состава; null, если не знаешь.
 - per100 — калорийность и белки/жиры/углеводы на 100 г продукта. gpp — вес одной штуки в граммах для шт, зубч. и пучок, иначе null.
 - Если один ингредиент встречается несколько раз (тесто и начинка), сложи количества.
 - Если рецепт на другом языке, переведи на русский.`;
@@ -1372,7 +1428,7 @@ function normRecipe(x,src){
   const r={id:uid(),name:String(x.name||"Новый рецепт").trim(),dish:DISH_CATS.includes(x.dish)?x.dish:"",servings:stated?Math.round(+x.servings):1,source:src||"",
     meals:(Array.isArray(x.meals)?x.meals:[]).filter(m=>MEAL_NAME[m]).length?x.meals.filter(m=>MEAL_NAME[m]):guessMeals(x.name||""),
     ingredients:(x.ingredients||[]).map(i=>({name:String(i.name||"").trim(),qty:i.qty==null?null:+i.qty,unit:normUnit(i.unit,i.qty),cat:CATS.includes(i.cat)?i.cat:"Другое",pantry:!!i.pantry,
-      pack:i.pack&&+i.pack.size>0?{size:+i.pack.size,unit:normUnit(i.pack.unit,1),name:String(i.pack.name||"упаковка")}:null,per100:per(i.per100),gpp:+i.gpp>0?+i.gpp:null})).filter(i=>i.name)}
+      pack:i.pack&&+i.pack.size>0?{size:+i.pack.size,unit:normUnit(i.pack.unit,1),name:String(i.pack.name||"упаковка")}:null,per100:per(i.per100),micro:i.micro&&isFinite(+i.micro.k)?{fib:+i.micro.fib||0,na:+i.micro.na||0,k:+i.micro.k||0,mg:+i.micro.mg||0,ca:+i.micro.ca||0,fe:+i.micro.fe||0,c:+i.micro.c||0}:null,gpp:+i.gpp>0?+i.gpp:null})).filter(i=>i.name)}
   r.ingredients=dedupeIngs(r.ingredients);;
   if(!stated)Object.assign(r,guessServings(r));
   return r;
@@ -1907,6 +1963,9 @@ document.body.addEventListener("click",e=>{
       UI.sheet=null;UI.prodDraft=null;render();break}
     case "scanOpenP":UI.msg.scan={t:""};UI.sheet={t:"scan",back:"prod",k:UI.sheet?.k,st:"cam"};render();startScan();break;
     case "daySel":UI.day=+b.dataset.v;render();fixViewport();break;
+    case "microOpen":UI.microWeek=false;UI.sheet={t:"micro"};render();break;
+    case "microWk":UI.microWeek=!!b.dataset.v;UI.lastSh=null;render();break;
+    case "sexSel":materialize();S.plan.sex=b.dataset.v||undefined;if(!S.plan.sex)delete S.plan.sex;savePlan();render();break;
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -1951,6 +2010,7 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.slot){const k=t.dataset.slot;const sl=UI.slots||[];UI.slots=t.checked?[...sl,k]:sl.filter(x=>x!==k);render();return}
   if(t.id==="edDish"){const ed=UI.editor;ed.dishSet=true;if(t.value==="__new"){ed.dishNew=true;ed.dish=""}else{ed.dishNew=false;ed.dish=t.value}render();return}
   if(t.dataset.pick){const id=t.dataset.pick;UI.pick=t.checked?[...UI.pick,id]:UI.pick.filter(x=>x!==id);render();return}
+  if(t.id==="ageIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.age=v;else delete S.plan.age;savePlan();render();return}
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
   if(t.id==="restoreFile"&&t.files.length){backupRestore(t.files[0]);t.value="";return}
   if(t.dataset.pd==="unit"&&UI.prodDraft){UI.prodDraft.unit=t.value;UI.lastSh=null;render();return}
