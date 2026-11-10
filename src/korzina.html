@@ -841,7 +841,7 @@ function microNorms(){const sx=S.plan.sex,a=+S.plan.age||35;if(!sx)return null;c
 function microNote(k){const sx=S.plan.sex,a=+S.plan.age||35,f=sx==="f";
   if(k==="fe")return f&&a<50?"женщинам до 50 лет нужно почти вдвое больше, чем мужчинам":f?"после 50 лет потребность снижается":"";
   if(k==="mg")return f?"":"мужчинам нужно больше";if(k==="ca")return (f&&a>50)||a>70?"после 50 лет нужно больше для костей":"";if(k==="na")return "не больше — около 5 г соли";if(k==="prot")return +S.plan.weight?`${({sport:1.6,mass:1.8}[S.plan.load]||1).toString().replace(".",",")} г на кг веса`:"средняя норма — укажите вес, чтобы считать от него";return ""}
-function microState(k,v,n){if(k==="na")return v>n?"over":"ok";const p=v/n;return p>=.8?"ok":p<.5?"low":""}
+function microState(k,v,n){if(k==="na")return v>n?"over":v>=n*.8?"ok":"";const p=v/n;return p>=.8?"ok":p<.5?"low":""}
 function microSummary(t){const N=microNorms();if(!N||!t)return"";const n=MKEYS.filter(([k])=>microState(k,t[k],N[k])==="ok").length;
   return `<button class="microbtn" data-a="microOpen"><span>Витамины и минералы</span><span class="ms">${n} из ${MKEYS.length} в норме${ICON_CHEV}</span></button>`}
 function dayKcal(week,d){
@@ -1384,8 +1384,8 @@ function vSheet(){
   if(s.t==="micro"){const N=microNorms();if(!N)return"";const wk=!!UI.microWeek;let t;
     if(wk){const ds=[0,1,2,3,4,5,6].map(dayMicro).filter(Boolean);t={};for(const [k] of MKEYS)t[k]=ds.length?ds.reduce((a,x)=>a+x[k],0)/ds.length:0}else t=dayMicro(UI.day??0)||{};
     const rnd=(v,u)=>u==="г"?trim(v,0):v>=100?trim(Math.round(v/10)*10,0):trim(v,v<10?1:0);
-    return `<h3>Витамины и минералы</h3><p class="need">${wk?"В среднем за день по заполненным дням":DAYS[UI.day??0]}</p>
-     <div class="seg" style="margin:4px 0 12px" role="radiogroup"><button role="radio" aria-checked="${!wk}" data-a="microWk" data-v="">День</button><button role="radio" aria-checked="${wk}" data-a="microWk" data-v="1">Неделя</button></div>
+    return `<h3>Витамины и минералы</h3><p class="need">${DAYS[UI.day??0]}</p>
+<div style="height:8px"></div>
      <div class="mlist">${MKEYS.map(([k,l,u])=>{const v=t[k]||0,n=N[k],st=microState(k,v,n);return `<div class="mrow"><div class="mh"><span>${l}</span><span class="mv ${st}">≈ ${rnd(v,u)} / ${trim(n,0)} ${u}${st==="low"?" · мало":st==="over"?" · больше нормы":""}</span></div><div class="kbar ${st==="over"?"over":st==="ok"?"ok":"under"}"><i style="width:${Math.min(100,Math.round(v/n*100))}%"></i></div></div>`}).join("")}</div>
      <p class="muted small" style="margin:12px 0 0">Оценка примерная (±20–30%): состав зависит от сорта, свежести и способа готовки. Нормы — для ${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет, меняются в ⚙ Настройках.</p>`;
   }
