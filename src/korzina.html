@@ -261,6 +261,7 @@ button.qty{cursor:pointer}
 .mrow .mv.low{color:var(--warn)}
 .mrow .mv.over{color:var(--beet)}
 .ntab small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.segsm button{white-space:nowrap;font-size:14px;padding-left:6px;padding-right:6px}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
 .homecount span{margin-left:auto;font-weight:500;font-size:13px}
@@ -835,10 +836,11 @@ function dayMicro(d){const t={prot:0,fib:0,na:0,k:0,mg:0,ca:0,fe:0,c:0};let ok=f
   for(const x of entries(S.plan.week).filter(x=>x.d===d)){const r=rById(x.e.rid);if(!r)continue;const m=recipeMicro(r).t;for(const k in t)t[k]+=m[k]*x.e.servings;ok=true}return ok?t:null}
 /* daily needs by sex and age — general guidance for healthy adults */
 function microNorms(){const sx=S.plan.sex,a=+S.plan.age||35;if(!sx)return null;const f=sx==="f";
-  return {prot:f?60:75,fib:f?25:30,na:2000,k:3500,mg:f?320:420,ca:(f&&a>50)||a>70?1200:1000,fe:f&&a<50?18:10,c:f?90:100}}
+  const kg=+S.plan.weight||0,gpk={sport:1.6,mass:1.8}[S.plan.load]||1;
+  return {prot:kg?Math.round(kg*gpk):f?60:75,fib:f?25:30,na:2000,k:3500,mg:f?320:420,ca:(f&&a>50)||a>70?1200:1000,fe:f&&a<50?18:10,c:f?90:100}}
 function microNote(k){const sx=S.plan.sex,a=+S.plan.age||35,f=sx==="f";
   if(k==="fe")return f&&a<50?"женщинам до 50 лет нужно почти вдвое больше, чем мужчинам":f?"после 50 лет потребность снижается":"";
-  if(k==="mg")return f?"":"мужчинам нужно больше";if(k==="ca")return (f&&a>50)||a>70?"после 50 лет нужно больше для костей":"";if(k==="na")return "не больше — около 5 г соли";return ""}
+  if(k==="mg")return f?"":"мужчинам нужно больше";if(k==="ca")return (f&&a>50)||a>70?"после 50 лет нужно больше для костей":"";if(k==="na")return "не больше — около 5 г соли";if(k==="prot")return +S.plan.weight?`${({sport:1.6,mass:1.8}[S.plan.load]||1).toString().replace(".",",")} г на кг веса`:"средняя норма — укажите вес, чтобы считать от него";return ""}
 function microState(k,v,n){if(k==="na")return v>n?"over":"ok";const p=v/n;return p>=.8?"ok":p<.5?"low":""}
 function microSummary(t){const N=microNorms();if(!N||!t)return"";const n=MKEYS.filter(([k])=>microState(k,t[k],N[k])==="ok").length;
   return `<button class="microbtn" data-a="microOpen"><span>Витамины и минералы</span><span class="ms">${n} из ${MKEYS.length} в норме${ICON_CHEV}</span></button>`}
@@ -1117,6 +1119,9 @@ function vSettings(){
    <div class="lbl" style="margin-top:16px">Витамины и минералы</div>
    <div class="seg" role="radiogroup" aria-label="Пол">${[["","Не считать"],["f","Женщина"],["m","Мужчина"]].map(([v,l])=>`<button role="radio" aria-checked="${(S.plan.sex||"")===v}" data-a="sexSel" data-v="${v}">${l}</button>`).join("")}</div>
    ${S.plan.sex?`<div class="field" style="margin-top:10px"><label for="ageIn">Возраст</label><input type="number" inputmode="numeric" id="ageIn" min="14" max="100" value="${S.plan.age||""}" placeholder="35"></div>
+   <div class="field" style="margin-top:10px"><label for="wIn">Вес, кг</label><input type="number" inputmode="decimal" id="wIn" min="30" max="250" value="${S.plan.weight||""}" placeholder="для нормы белка"></div>
+   <div class="lbl" style="margin-top:10px">Нагрузка</div>
+   <div class="seg segsm" role="radiogroup" aria-label="Нагрузка">${[["","Обычная"],["sport","Спорт"],["mass","Набор мышц"]].map(([v,l])=>`<button role="radio" aria-checked="${(S.plan.load||"")===v}" data-a="loadSel" data-v="${v}">${l}</button>`).join("")}</div>
    <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. ${S.plan.sex==="f"?"При беременности, кормлении, больших нагрузках или болезнях":"При больших нагрузках или болезнях"} нормы другие — уточните у врача.</p>
    <div class="sgroup ntab">${MKEYS.map(([k,l,u])=>`<div><span>${l}${microNote(k)?`<small>${microNote(k)}</small>`:""}</span><span>${k==="na"?"до ":""}${trim(microNorms()[k],0)} ${u}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:8px 0 0">Укажите пол — у каждого дня в меню появится оценка витаминов и минералов.</p>`}
   </div></div>
@@ -1965,6 +1970,7 @@ document.body.addEventListener("click",e=>{
     case "daySel":UI.day=+b.dataset.v;render();fixViewport();break;
     case "microOpen":UI.microWeek=false;UI.sheet={t:"micro"};render();break;
     case "microWk":UI.microWeek=!!b.dataset.v;UI.lastSh=null;render();break;
+    case "loadSel":materialize();if(b.dataset.v)S.plan.load=b.dataset.v;else delete S.plan.load;savePlan();render();break;
     case "sexSel":materialize();S.plan.sex=b.dataset.v||undefined;if(!S.plan.sex)delete S.plan.sex;savePlan();render();break;
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
@@ -2010,6 +2016,7 @@ document.body.addEventListener("change",e=>{
   if(t.dataset.slot){const k=t.dataset.slot;const sl=UI.slots||[];UI.slots=t.checked?[...sl,k]:sl.filter(x=>x!==k);render();return}
   if(t.id==="edDish"){const ed=UI.editor;ed.dishSet=true;if(t.value==="__new"){ed.dishNew=true;ed.dish=""}else{ed.dishNew=false;ed.dish=t.value}render();return}
   if(t.dataset.pick){const id=t.dataset.pick;UI.pick=t.checked?[...UI.pick,id]:UI.pick.filter(x=>x!==id);render();return}
+  if(t.id==="wIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.weight=v;else delete S.plan.weight;savePlan();render();return}
   if(t.id==="ageIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.age=v;else delete S.plan.age;savePlan();render();return}
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
   if(t.id==="restoreFile"&&t.files.length){backupRestore(t.files[0]);t.value="";return}
