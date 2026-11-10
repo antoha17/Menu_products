@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=996563d3">
+<link rel="manifest" href="manifest.webmanifest?v=62363d22">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -878,7 +878,9 @@ function shoppingList(){
 }
 const atHome=i=>!!(S.plan.home||{})[i.key];
 function setHome(key,v){const i=shoppingList().find(x=>x.key===key);materialize();S.plan.home=S.plan.home||{};if(v)S.plan.home[key]=true;else delete S.plan.home[key];delete S.plan.checks[key];UI.sheet=null;savePlan();render()}
-const isRemoved=i=>{const r=(S.plan.removed||{})[i.key];return r!=null&&i.v<=r+1e-9};
+/* "Очистить список" hides what was on the list for exactly this menu; any change to the menu (dish, portions) shows the new list in full */
+const menuSig=()=>entries(S.plan.week).map(x=>x.k+":"+x.e.rid+":"+x.e.servings).sort().join("|");
+const isRemoved=i=>{if(S.plan.removedSig!==menuSig())return false;const r=(S.plan.removed||{})[i.key];return r!=null&&i.v<=r+1e-9};
 const listItems=()=>shoppingList().filter(i=>!atHome(i)&&!isRemoved(i));
 function buyText(i){
   if(i.f==="none")return "";
@@ -1801,9 +1803,9 @@ document.body.addEventListener("click",e=>{
     case "clearExamples":S={recipes:[],plan:Object.assign(emptyPlan(),S.plan.norm?{norm:S.plan.norm}:{}),products:S.products||{}};isExample=false;UI.sel=null;UI.editor=null;UI.preview=null;localSave();if(store.mode==="db")serial(()=>col().doc("plan").set(clean(S.plan)));render();break;
     case "clearWeek":materialize();undoable("Меню очищено");S.plan.week={};S.plan.checks={};S.plan.removed={};S.plan.home={};savePlan();render();break;
     case "clearList":{materialize();undoable("Список очищен");S.plan.removed=S.plan.removed||{};
-      for(const i of shoppingList())if(!i.extra)S.plan.removed[i.key]=i.v;
+      for(const i of shoppingList())if(!i.extra)S.plan.removed[i.key]=i.v;S.plan.removedSig=menuSig();
       S.plan.extras=[];S.plan.checks={};savePlan();render();break}
-    case "rmItem":{const i=shoppingList().find(x=>x.key===b.dataset.key);if(!i)return;materialize();S.plan.removed=S.plan.removed||{};S.plan.removed[i.key]=i.v;delete S.plan.checks[i.key];UI.sheet=null;savePlan();render();break}
+    case "rmItem":{const i=shoppingList().find(x=>x.key===b.dataset.key);if(!i)return;materialize();S.plan.removed=S.plan.removed||{};if(S.plan.removedSig!==menuSig()){S.plan.removed={};S.plan.removedSig=menuSig()}S.plan.removed[i.key]=i.v;delete S.plan.checks[i.key];UI.sheet=null;savePlan();render();break}
     case "undo":{const u=UI.undo;if(!u)return;S.recipes=u.snap.recipes;S.plan=u.snap.plan;migrate();
       if(store.mode==="db"){S.recipes.forEach(saveRecipe);savePlan()}else localSave();UI.undo=null;clearInterval(UI.undoT);render();break}
     case "togglePlanner":UI.planner=!UI.planner;render();break;
