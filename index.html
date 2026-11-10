@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=6d65e8ae">
+<link rel="manifest" href="manifest.webmanifest?v=996563d3">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -783,7 +783,10 @@ function makeProduct(d){const r={id:uid(),kind:"product",name:d.name.trim(),dish
   ingredients:[{name:d.name.trim(),qty:+d.qty||100,unit:d.unit||"г",cat:d.cat||lookup(d.name)?.cat||"Другое",pantry:false,per100:d.per100||null}]};
   if(d.src)r.ingredients[0].nutSrc=d.src;return r}
 function prodDraftOf(r){const i=r.ingredients[0]||{};const P=perShown(i)||{};return {id:r.id,name:r.name,qty:i.qty,unit:i.unit||"г",kcal:P.kcal??"",p:P.p??"",f:P.f??"",c:P.c??"",src:i.nutSrc||""}}
-function addToMeal(r,k){(S.plan.week[k]=S.plan.week[k]||[]).push({id:uid(),rid:r.id,servings:1});r.used=Date.now();saveRecipe(r);savePlan()}
+/* a dish put into the menu brings its products back to the list, even if they were cleared from it earlier */
+function unhideFor(r){const rm=S.plan.removed;if(!rm||!r)return;for(const i of r.ingredients||[]){const d=lookup(i.name);const gk=low((d&&d.canon)||i.name.trim());
+  for(const k of Object.keys(rm))if(k.startsWith(gk+"|"))delete rm[k];delete (S.plan.home||{})[gk+"|"+fam(normUnit(i.unit,i.qty))[0]]}}
+function addToMeal(r,k){unhideFor(r);(S.plan.week[k]=S.plan.week[k]||[]).push({id:uid(),rid:r.id,servings:1});r.used=Date.now();saveRecipe(r);savePlan()}
 function catChips(list,cur,act){const nAll=list.filter(r=>!isProd(r)).length;const cnt={};list.forEach(r=>{const c=dishOf(r);cnt[c]=(cnt[c]||0)+1});const fav=list.filter(r=>r.fav).length;if(Object.keys(cnt).length<2&&!fav)return"";
   return `<div class="chips" role="radiogroup" aria-label="Разделы">${fav?`<button class="chip favchip" role="radio" aria-checked="${cur==="__fav"}" data-a="${act}" data-v="__fav">${starIcon(true)}Избранное · ${fav}</button>`:""}<button class="chip" role="radio" aria-checked="${!cur}" data-a="${act}" data-v="">Все · ${nAll}</button>${dishCats().filter(c=>cnt[c]).map(c=>`<button class="chip" role="radio" aria-checked="${cur===c}" data-a="${act}" data-v="${esc(c)}">${esc(c)} · ${cnt[c]}</button>`).join("")}</div>`}
 function catSections(list,cur,q,row,cls){if(cur==="__fav"){list=list.filter(r=>r.fav);cur=""}else if(!cur)list=list.filter(r=>!isProd(r));list=list.slice().sort((a,b)=>!!b.fav-!!a.fav);
@@ -1834,7 +1837,7 @@ document.body.addEventListener("click",e=>{
       const k=ns/r.servings;r.ingredients.forEach(i=>{if(i.qty!=null)i.qty=i.qty*k});r.servings=ns;UI.scale=null;
       if(store.mode==="db"){clearTimeout(UI.scaleT);UI.scaleT=setTimeout(()=>saveRecipe(r),600)}else saveRecipe(r);render();break}
     case "addToPlan":{const r=rById(b.dataset.id);const sl=UI.slots||[];if(!r||!sl.length)return;const sv=1;materialize();
-      sl.forEach(k=>(W[k]=W[k]||[]).push({id:uid(),rid:r.id,servings:sv}));r.used=Date.now();saveRecipe(r);UI.addServ=null;UI.slots=[];savePlan();render();
+      unhideFor(r);sl.forEach(k=>(W[k]=W[k]||[]).push({id:uid(),rid:r.id,servings:sv}));r.used=Date.now();saveRecipe(r);UI.addServ=null;UI.slots=[];savePlan();render();
       const m=document.getElementById("addedMsg");if(m){m.textContent="Добавлено в меню: "+sl.length+" ✓";setTimeout(()=>{if(m.isConnected)m.textContent=""},2500)}break}
     case "toHomeList":document.querySelector(".homecard")?.scrollIntoView({behavior:"smooth",block:"start"});break;
     case "toHome":setHome(b.dataset.key,true);break;
@@ -1917,7 +1920,7 @@ document.body.addEventListener("click",e=>{
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
-      materialize();(S.plan.week[k]=S.plan.week[k]||[]).push({id:uid(),rid:r.id,servings:sv});r.used=Date.now();saveRecipe(r);UI.sheet=null;savePlan();render();break}
+      materialize();unhideFor(r);(S.plan.week[k]=S.plan.week[k]||[]).push({id:uid(),rid:r.id,servings:sv});r.used=Date.now();saveRecipe(r);UI.sheet=null;savePlan();render();break}
     case "pickStart":UI.pick=[];UI.sel=null;UI.editor=null;render();break;
     case "pickDone":UI.pick=null;render();break;
     case "pickToggleAll":UI.pick=UI.pick.length===S.recipes.length?[]:S.recipes.map(r=>r.id);render();break;
