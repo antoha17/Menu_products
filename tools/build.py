@@ -23,7 +23,8 @@ head = '''<!doctype html><html lang="ru"><head><meta charset="utf-8">
 </head><body>
 '''
 tail = '''
-<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.t==="updated"&&performance.now()<6000&&!document.activeElement?.matches?.("input,textarea")&&!document.querySelector(".sheet.on"))location.reload()})}</script>
 </body></html>
 '''
 open(f'{out}/index.html','w',encoding='utf8').write(head.replace('VER',ver)+page+tail)
@@ -40,14 +41,16 @@ self.addEventListener("fetch",e=>{
   const u=new URL(r.url);
   if(/\\.(png|webmanifest)$/.test(u.pathname))return;
   if(u.origin===location.origin){
-    // app files: ask the server for the fresh version (GitHub Pages lets browsers cache for 10 min), but on a slow
-    // or missing connection do not keep a black screen: after 1.5 s the saved copy opens, the fresh one is saved for next time
-    const net=fetch(r.url,{cache:"no-cache",credentials:"same-origin"}).then(res=>{if(res.ok){const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c))}return res});
-    const saved=()=>caches.match(r).then(m=>m||caches.match("index.html"));
-    e.respondWith(new Promise(done=>{let over=false;const finish=v=>{if(!over&&v){over=true;done(v)}};
-      const t=setTimeout(()=>saved().then(finish),1500);
-      net.then(res=>{clearTimeout(t);finish(res)}).catch(()=>{clearTimeout(t);saved().then(m=>finish(m||Response.error()))})}));
-    e.waitUntil(net.catch(()=>{}));
+    // app files: open the saved copy at once (instant start, works offline), fetch the fresh one in the background;
+    // if it changed, save it and tell the page, which reloads only if it was opened a moment ago
+    const net=fetch(r.url,{cache:"no-cache",credentials:"same-origin"});
+    e.respondWith(caches.match(r).then(m=>m||(r.mode==="navigate"?caches.match("index.html"):null)).then(saved=>{const savedCopy=saved&&saved.clone();
+      const upd=net.then(async res=>{if(!res.ok)return res;const fresh=res.clone();const c=await caches.open(CACHE);
+        if(saved&&r.mode==="navigate"){const [a,b]=await Promise.all([savedCopy.text(),res.clone().text()]);
+          if(a!==b){await c.put(r,fresh);const cl=await self.clients.matchAll({type:"window"});cl.forEach(x=>x.postMessage({t:"updated"}))}}
+        else await c.put(r,fresh);return res});
+      e.waitUntil(upd.catch(()=>{}));
+      return saved||upd.catch(()=>caches.match("index.html").then(m=>m||Response.error()))}));
   }else if(/fonts\\.(googleapis|gstatic)\\.com$/.test(u.hostname)){
     e.respondWith(caches.match(r).then(m=>m||fetch(r).then(res=>{const c=res.clone();caches.open(CACHE).then(x=>x.put(r,c));return res})));
   }

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=3c36d684">
+<link rel="manifest" href="manifest.webmanifest?v=6e0cf572">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -274,6 +274,10 @@ button.qty{cursor:pointer}
 .mrow .mv.over{color:var(--beet)}
 .ntab small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 .segsm button{white-space:nowrap;font-size:14px;padding-left:6px;padding-right:6px}
+/* shown only if the first screen takes a moment to draw */
+.boot{display:grid;place-items:center;height:60vh;opacity:0;animation:bootin .3s .4s forwards}
+.boot i{width:28px;height:28px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite}
+@keyframes bootin{to{opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
 .homecount span{margin-left:auto;font-weight:500;font-size:13px}
@@ -468,7 +472,7 @@ button.add-dish{text-align:left;cursor:pointer}
   <div class="topbar glass" id="topbar"><span></span><span class="t" id="barTitle"></span>
     <button class="gear glass" id="setBtn" aria-label="Настройки" title="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
-  <div id="app"></div>
+  <div id="app"><div class="boot" aria-label="Загрузка"><i></i></div></div>
 </main>
 <div class="botglass" aria-hidden="true"></div>
 <nav class="tabs glass" role="tablist" id="tabs" aria-label="Разделы"><span class="tabpill" id="tabpill" aria-hidden="true"></span>
@@ -2109,5 +2113,6 @@ document.body.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id==="
 boot();
 </script>
 
-<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));</script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+navigator.serviceWorker.addEventListener("message",e=>{if(e.data&&e.data.t==="updated"&&performance.now()<6000&&!document.activeElement?.matches?.("input,textarea")&&!document.querySelector(".sheet.on"))location.reload()})}</script>
 </body></html>
