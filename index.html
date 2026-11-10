@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=d94e6c72">
+<link rel="manifest" href="manifest.webmanifest?v=7b9fafeb">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1129,7 +1129,7 @@ function vSettings(){
    <div class="lbl" style="margin-top:16px">Витамины и минералы</div>
    <div class="seg" role="radiogroup" aria-label="Пол">${[["","Не считать"],["f","Женщина"],["m","Мужчина"]].map(([v,l])=>`<button role="radio" aria-checked="${(S.plan.sex||"")===v}" data-a="sexSel" data-v="${v}">${l}</button>`).join("")}</div>
    ${S.plan.sex?`<div class="field" style="margin-top:10px"><label for="ageIn">Возраст</label><input type="number" inputmode="numeric" id="ageIn" min="14" max="100" value="${S.plan.age||""}" placeholder="35"></div>
-   <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. При беременности, кормлении, больших нагрузках или болезнях нормы другие — уточните у врача.</p>
+   <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. ${S.plan.sex==="f"?"При беременности, кормлении, больших нагрузках или болезнях":"При больших нагрузках или болезнях"} нормы другие — уточните у врача.</p>
    <div class="sgroup ntab">${MKEYS.map(([k,l,u])=>`<div><span>${l}${microNote(k)?`<small>${microNote(k)}</small>`:""}</span><span>${k==="na"?"до ":""}${trim(microNorms()[k],0)} ${u}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:8px 0 0">Укажите пол — у каждого дня в меню появится оценка витаминов и минералов.</p>`}
   </div></div>
   <div class="gtitle">Сервисы</div>

@@ -1117,7 +1117,7 @@ function vSettings(){
    <div class="lbl" style="margin-top:16px">Витамины и минералы</div>
    <div class="seg" role="radiogroup" aria-label="Пол">${[["","Не считать"],["f","Женщина"],["m","Мужчина"]].map(([v,l])=>`<button role="radio" aria-checked="${(S.plan.sex||"")===v}" data-a="sexSel" data-v="${v}">${l}</button>`).join("")}</div>
    ${S.plan.sex?`<div class="field" style="margin-top:10px"><label for="ageIn">Возраст</label><input type="number" inputmode="numeric" id="ageIn" min="14" max="100" value="${S.plan.age||""}" placeholder="35"></div>
-   <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. При беременности, кормлении, больших нагрузках или болезнях нормы другие — уточните у врача.</p>
+   <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. ${S.plan.sex==="f"?"При беременности, кормлении, больших нагрузках или болезнях":"При больших нагрузках или болезнях"} нормы другие — уточните у врача.</p>
    <div class="sgroup ntab">${MKEYS.map(([k,l,u])=>`<div><span>${l}${microNote(k)?`<small>${microNote(k)}</small>`:""}</span><span>${k==="na"?"до ":""}${trim(microNorms()[k],0)} ${u}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:8px 0 0">Укажите пол — у каждого дня в меню появится оценка витаминов и минералов.</p>`}
   </div></div>
   <div class="gtitle">Сервисы</div>
