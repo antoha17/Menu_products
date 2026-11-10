@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=03259470">
+<link rel="manifest" href="manifest.webmanifest?v=3c36d684">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1125,7 +1125,9 @@ function vSettings(){
    <input type="range" class="hue" id="accHue" min="0" max="359" value="${getAcc().h??151}" aria-label="Цвет кнопок">
   </div></div>
   <div class="gtitle">Питание</div>
-  <div class="group"><div class="ginner">
+  <div class="group">
+   <button class="disc" data-a="setToggle" data-k="nut" aria-expanded="${!!op.nut}"><b>Нормы питания</b><span class="val">${esc([normOf()?trim(normOf(),0)+" ккал":"",S.plan.sex?(S.plan.sex==="f"?"жен.":"муж.")+" "+(+S.plan.age||35):""].filter(Boolean).join(" · ")||"не заданы")}${ICON_CHEV}</span></button>
+   ${op.nut?`<div class="discbody">
    <div class="field" style="margin:0"><label for="normIn">Норма калорий в день</label><input type="number" inputmode="numeric" id="normIn" min="0" step="50" value="${normOf()||""}" placeholder="не задана"></div>
    <p class="muted small" style="margin:8px 0 0">У каждого дня покажем, сколько запланировано из нормы. Зелёным — норма, красным — больше нормы. Чтобы не показывать, оставьте поле пустым.</p>
    <div class="lbl" style="margin-top:16px">Витамины и минералы</div>
@@ -1136,7 +1138,9 @@ function vSettings(){
    <div class="seg segsm" role="radiogroup" aria-label="Нагрузка">${[["","Обычная"],["sport","Спорт"],["mass","Набор мышц"]].map(([v,l])=>`<button role="radio" aria-checked="${(S.plan.load||"")===v}" data-a="loadSel" data-v="${v}">${l}</button>`).join("")}</div>
    <p class="muted small" style="margin:8px 0 6px">Нормы для <b>${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет</b> по общим рекомендациям для здоровых взрослых. ${S.plan.sex==="f"?"При беременности, кормлении, больших нагрузках или болезнях":"При больших нагрузках или болезнях"} нормы другие — уточните у врача.</p>
    <div class="sgroup ntab">${MKEYS.map(([k,l,u])=>`<div><span>${l}${microNote(k)?`<small>${microNote(k)}</small>`:""}</span><span>${k==="na"?"до ":""}${trim(microNorms()[k],0)} ${u}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:8px 0 0">Укажите пол — у каждого дня в меню появится оценка витаминов и минералов.</p>`}
-  </div></div>
+  
+   </div>`:""}
+  </div>
   <div class="gtitle">Сервисы</div>
   <div class="group">
    <button class="disc" data-a="setToggle" data-k="ai" aria-expanded="${!!op.ai}"><b>ИИ-помощник</b><span class="val">${esc(aiSummary)}${ICON_CHEV}</span></button>
