@@ -266,6 +266,16 @@ button.qty{cursor:pointer}
 .boot{display:grid;place-items:center;height:60vh;opacity:0;animation:bootin .3s .4s forwards}
 .boot i{width:28px;height:28px;border-radius:50%;border:3px solid var(--accent-soft);border-top-color:var(--accent);animation:spin .8s linear infinite}
 @keyframes bootin{to{opacity:1}}@keyframes spin{to{transform:rotate(360deg)}}
+.vvlist{margin:6px 0 4px;background:var(--surface);border-radius:16px;overflow:hidden}
+.vvr{display:flex;align-items:center;gap:10px;padding:10px 12px}
+.vvr+.vvr{border-top:1px solid var(--line)}
+.vvr.off .vvm{opacity:.5}
+.vvc input{width:22px;height:22px;margin:0}
+.vvm{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.vvn{font-weight:600;font-size:15px}
+.vvn small{font-weight:400;color:var(--muted);white-space:nowrap}
+.vvm select{width:100%;font-size:14px!important;padding:6px 8px}
+.vvp{font-size:12px;color:var(--muted)}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
 .homecount span{margin-left:auto;font-weight:500;font-size:13px}
@@ -917,6 +927,31 @@ function setHome(key,v){const i=shoppingList().find(x=>x.key===key);materialize(
 /* "Очистить список" hides what was on the list for exactly this menu; any change to the menu (dish, portions) shows the new list in full */
 const menuSig=()=>entries(S.plan.week).map(x=>x.k+":"+x.e.rid+":"+x.e.servings).sort().join("|");
 const isRemoved=i=>{if(S.plan.removedSig!==menuSig())return false;const r=(S.plan.removed||{})[i.key];return r!=null&&i.v<=r+1e-9};
+/* ---------- VkusVill: their public MCP server finds products and builds a shareable cart link ---------- */
+const VV="https://mcp.vkusvill.ru/mcp";
+async function vvCall(name,args,signal){const r=await fetch(VV,{method:"POST",signal,headers:{"content-type":"application/json","accept":"application/json, text/event-stream"},
+  body:JSON.stringify({jsonrpc:"2.0",id:Date.now(),method:"tools/call",params:{name,arguments:args}})});
+  const j=await r.json();const t=j?.result?.content?.[0]?.text;const d=t?JSON.parse(t):null;if(!d?.ok)throw new Error("vv");return d.data}
+const vvName=s=>String(s||"").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
+/* grams (or ml) the list needs, when it can be known */
+function vvNeedG(i){if(i.f==="mass"||i.f==="vol")return i.v;if(i.f==="шт"){const g=gppOf({name:i.name});return g?i.v*g:null}return null}
+function vvQty(i,p){const w=p.weight?.value?(p.weight.unit==="кг"?p.weight.value*1000:+p.weight.value):null;const g=vvNeedG(i);
+  if(p.unit==="кг"){return Math.max(0.1,Math.round((g?g/1000:0.5)*10)/10)}
+  if(g&&w)return Math.max(1,Math.ceil(g/w-0.05));return 1}
+async function vvBuild(){const items=listItems().filter(i=>!S.plan.checks[i.key]);const st={loading:true,rows:[],err:""};UI.vv=st;UI.sheet={t:"vv"};render();
+  const ctl=new AbortController();UI.vvCtl=ctl;const tm=setTimeout(()=>ctl.abort(),25000);
+  try{const out=new Array(items.length);let k=0;
+    await Promise.all([0,1,2,3].map(async()=>{while(k<items.length){const n=k++;const i=items[n];
+      try{const d=await vvCall("vkusvill_products_search",{q:i.name.replace(/[«»"]/g,"").replace(/(\d+(?:[.,]\d+)?)\s*[–-]\s*\d+(?:[.,]\d+)?\s*%/,"$1%"),limit:5,mode:"custom",fields:["id","name","price","unit","weight"]},ctl.signal);
+        const opts=(d.items||[]).map(p=>({id:p.id,name:vvName(p.name),price:+p.price?.current||0,unit:p.unit,weight:p.weight}));
+        out[n]={key:i.key,name:i.name,need:i.f==="по вкусу"?"по вкусу":fmt(i.v,i.f),opts,sel:0,q:opts[0]?vvQty(i,opts[0]):1,on:!!opts.length,item:i}}
+      catch(e){if(e.name==="AbortError")throw e;out[n]={key:i.key,name:i.name,need:fmt(i.v,i.f),opts:[],sel:0,q:1,on:false,item:i}}}}));
+    st.rows=out}catch(e){st.err="Нет соединения с ВкусВиллом."}
+  finally{clearTimeout(tm);st.loading=false;if(UI.sheet?.t==="vv"){UI.lastSh=null;render()}}}
+async function vvOpen(){const st=UI.vv;const prods=st.rows.filter(r=>r.on&&r.opts[r.sel]).map(r=>({id:r.opts[r.sel].id,q:r.q}));if(!prods.length)return;
+  const w=window.open("","_blank");st.busy=true;UI.lastSh=null;render();
+  try{const d=await vvCall("vkusvill_cart_link_create",{products:prods});if(w)w.location=d.link;else location.href=d.link;st.busy=false;UI.sheet=null;render()}
+  catch(e){if(w)w.close();st.busy=false;st.err="Нет соединения с ВкусВиллом.";UI.lastSh=null;render()}}
 const listItems=()=>shoppingList().filter(i=>!atHome(i)&&!isRemoved(i));
 function buyText(i){
   if(i.f==="none")return "";
@@ -1359,7 +1394,8 @@ function vSheet(){
   if(s.t==="share"){const n=lavkaText().split("\n").filter(Boolean).length;
     return `<h3>Поделиться списком</h3><p class="need">${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}</p>
      <div class="sgroup sharel"><button data-a="shareShop"><span>Отправить</span><span>в мессенджер, заметки…</span></button>
-     <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для поиска товаров</span></button></div>`;
+     <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для поиска товаров</span></button>
+     <button data-a="vvStart"><span>Корзина во ВкусВилле</span><span>подобрать товары и открыть корзину</span></button></div>`;
   }
   if(s.t==="ing"){const r=rById(s.rid),i=r?.ingredients[s.ix];if(!i)return"";const d=UI.ingDraft||{};const g=ingGrams(i,1);
     return `<h3>${esc(i.name)}</h3><p class="need">${esc(fmtIng(i,1))} в рецепте${g&&d.kcal?` · ≈ ${trim(d.kcal*g/100,0)} ккал`:""}</p>
@@ -1396,6 +1432,20 @@ function vSheet(){
 <div style="height:8px"></div>
      <div class="mlist">${MKEYS.map(([k,l,u])=>{const v=t[k]||0,n=N[k],st=microState(k,v,n);return `<div class="mrow"><div class="mh"><span>${l}</span><span class="mv ${st}">≈ ${rnd(v,u)} / ${trim(n,0)} ${u}${st==="low"?" · мало":st==="over"?" · больше нормы":""}</span></div><div class="kbar ${st==="over"?"over":st==="ok"?"ok":"under"}"><i style="width:${Math.min(100,Math.round(v/n*100))}%"></i></div></div>`}).join("")}</div>
      <p class="muted small" style="margin:12px 0 0">Оценка примерная (±20–30%): состав зависит от сорта, свежести и способа готовки. Нормы — для ${S.plan.sex==="f"?"женщины":"мужчины"} ${+S.plan.age||35} лет, меняются в ⚙ Настройках.</p>`;
+  }
+  if(s.t==="vv"){const st=UI.vv||{};
+    if(st.loading)return `<h3>Корзина ВкусВилл</h3><p class="need">Подбираю товары…</p><div class="boot" style="height:120px;opacity:1;animation:none"><i></i></div>`;
+    if(st.err&&!st.rows.length)return `<h3>Корзина ВкусВилл</h3><p class="status err">${esc(st.err)}</p><div class="cta"><button class="btn" data-a="closeSheet">Закрыть</button><button class="btn primary" data-a="vvStart">Ещё раз</button></div>`;
+    const on=st.rows.filter(r=>r.on&&r.opts[r.sel]);const sum=on.reduce((a,r)=>a+r.opts[r.sel].price*r.q,0);
+    return `<h3>Корзина ВкусВилл</h3><p class="need">${on.length} ${on.length%10===1&&on.length%100!==11?"товар":[2,3,4].includes(on.length%10)&&![12,13,14].includes(on.length%100)?"товара":"товаров"} · ≈ ${trim(Math.round(sum),0)} ₽</p>
+     <div class="vvlist">${st.rows.map((r,ix)=>{const p=r.opts[r.sel];return `<div class="vvr${r.on?"":" off"}">
+       <label class="vvc"><input type="checkbox" data-vvon="${ix}"${r.on?" checked":""}${p?"":" disabled"}></label>
+       <div class="vvm"><div class="vvn">${esc(r.name)} <small>· нужно ${esc(r.need)}</small></div>
+        ${p?`<select data-vvsel="${ix}" aria-label="Товар ВкусВилла">${r.opts.map((o,k)=>`<option value="${k}"${k===r.sel?" selected":""}>${esc(o.name)}</option>`).join("")}</select><small class="vvp">${trim(p.price,0)} ₽${p.unit==="кг"?" за кг":" за шт"} · ${trim(Math.round(p.price*r.q),0)} ₽</small>`:`<span class="muted small">не нашлось во ВкусВилле</span>`}</div>
+       ${p?`<span class="stepper"><button data-a="vvQ" data-i="${ix}" data-d="-1" aria-label="Меньше">−</button><span class="v" style="min-width:3.2em">${p.unit==="кг"?trim(r.q,1)+" кг":r.q+" шт"}</span><button data-a="vvQ" data-i="${ix}" data-d="1" aria-label="Больше">+</button></span>`:""}</div>`}).join("")}</div>
+     ${st.err?`<p class="status err">${esc(st.err)}</p>`:""}
+     <p class="muted small" style="margin:8px 0 0">Наличие и итоговую цену покажет ВкусВилл в корзине.</p>
+     <div class="cta"><button class="btn" data-a="closeSheet">Отмена</button><button class="btn primary" data-a="vvOpen"${on.length&&!st.busy?"":" disabled"}>${st.busy?"Открываю…":"Открыть корзину"}</button></div>`;
   }
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
@@ -1980,6 +2030,9 @@ document.body.addEventListener("click",e=>{
     case "microWk":UI.microWeek=!!b.dataset.v;UI.lastSh=null;render();break;
     case "loadSel":materialize();if(b.dataset.v)S.plan.load=b.dataset.v;else delete S.plan.load;savePlan();render();break;
     case "sexSel":materialize();S.plan.sex=b.dataset.v||undefined;if(!S.plan.sex)delete S.plan.sex;savePlan();render();break;
+    case "vvStart":vvBuild();break;
+    case "vvOpen":vvOpen();break;
+    case "vvQ":{const r=UI.vv?.rows[+b.dataset.i];if(!r)return;const kg=r.opts[r.sel]?.unit==="кг";const st=kg?0.1:1;r.q=Math.max(st,Math.round((r.q+st*+b.dataset.d)*10)/10);UI.lastSh=null;render();break}
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -2029,6 +2082,8 @@ document.body.addEventListener("change",e=>{
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
   if(t.id==="restoreFile"&&t.files.length){backupRestore(t.files[0]);t.value="";return}
   if(t.dataset.pd==="unit"&&UI.prodDraft){UI.prodDraft.unit=t.value;UI.lastSh=null;render();return}
+  if(t.dataset.vvon!=null&&UI.vv){UI.vv.rows[+t.dataset.vvon].on=t.checked;UI.lastSh=null;render();return}
+  if(t.dataset.vvsel!=null&&UI.vv){const r=UI.vv.rows[+t.dataset.vvsel];r.sel=+t.value;r.q=vvQty(r.item,r.opts[r.sel]);UI.lastSh=null;render();return}
   if(t.id==="scanPhoto"&&t.files.length){scanPhoto(t.files[0]);return}
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src}
   if(t.id==="impPhoto"&&t.files.length){UI.impText=document.getElementById("impText").value;addPhotos([...t.files]);return}
