@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=02f163c0">
+<link rel="manifest" href="manifest.webmanifest?v=bfd3dda9">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -286,7 +286,7 @@ button.qty{cursor:pointer}
 .vvm{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .vvn{font-weight:600;font-size:15px}
 .vvn small{font-weight:400;color:var(--muted);white-space:nowrap}
-.vvm select{width:100%;font-size:14px!important;padding:6px 8px}
+.vvm select{width:100%;font-size:14px!important;padding:7px 30px 7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vvp{font-size:12px;color:var(--muted)}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
 .homecount svg{width:18px;height:18px;flex:none}
@@ -940,7 +940,7 @@ function setHome(key,v){const i=shoppingList().find(x=>x.key===key);materialize(
 const menuSig=()=>entries(S.plan.week).map(x=>x.k+":"+x.e.rid+":"+x.e.servings).sort().join("|");
 const isRemoved=i=>{if(S.plan.removedSig!==menuSig())return false;const r=(S.plan.removed||{})[i.key];return r!=null&&i.v<=r+1e-9};
 /* ---------- VkusVill: their public MCP server finds products and builds a shareable cart link ---------- */
-const VV="https://mcp.vkusvill.ru/mcp";
+const VV="https://mcp.vkusvill.ru/mcp",VV_HOME="https://vkusvill.ru/";
 async function vvCall(name,args,signal){const r=await fetch(VV,{method:"POST",signal,headers:{"content-type":"application/json","accept":"application/json, text/event-stream"},
   body:JSON.stringify({jsonrpc:"2.0",id:Date.now(),method:"tools/call",params:{name,arguments:args}})});
   const j=await r.json();const t=j?.result?.content?.[0]?.text;const d=t?JSON.parse(t):null;if(!d?.ok)throw new Error("vv");return d.data}
@@ -959,11 +959,16 @@ async function vvBuild(){const items=listItems().filter(i=>!S.plan.checks[i.key]
         out[n]={key:i.key,name:i.name,need:i.f==="по вкусу"?"по вкусу":fmt(i.v,i.f),opts,sel:0,q:opts[0]?vvQty(i,opts[0]):1,on:!!opts.length,item:i}}
       catch(e){if(e.name==="AbortError")throw e;out[n]={key:i.key,name:i.name,need:fmt(i.v,i.f),opts:[],sel:0,q:1,on:false,item:i}}}}));
     st.rows=out}catch(e){st.err="Нет соединения с ВкусВиллом."}
-  finally{clearTimeout(tm);st.loading=false;if(UI.sheet?.t==="vv"){UI.lastSh=null;render()}}}
-async function vvOpen(){const st=UI.vv;const prods=st.rows.filter(r=>r.on&&r.opts[r.sel]).map(r=>({id:r.opts[r.sel].id,q:r.q}));if(!prods.length)return;
-  const w=window.open("","_blank");st.busy=true;UI.lastSh=null;render();
-  try{const d=await vvCall("vkusvill_cart_link_create",{products:prods});if(w)w.location=d.link;else location.href=d.link;st.busy=false;UI.sheet=null;render()}
-  catch(e){if(w)w.close();st.busy=false;st.err="Нет соединения с ВкусВиллом.";UI.lastSh=null;render()}}
+  finally{clearTimeout(tm);st.loading=false;if(UI.sheet?.t==="vv"){UI.lastSh=null;render();vvPrep()}}}
+const vvProds=st=>st.rows.filter(r=>r.on&&r.opts[r.sel]).map(r=>({id:r.opts[r.sel].id,q:r.q}));
+function vvPrep(){const st=UI.vv;if(!st||st.loading)return;const prods=vvProds(st),key=JSON.stringify(prods);if(st.linkKey===key)return;
+  st.linkKey=key;st.link=null;clearTimeout(st.lt);if(!prods.length)return;
+  st.lt=setTimeout(async()=>{try{const d=await vvCall("vkusvill_cart_link_create",{products:prods});if(st.linkKey===key){st.link=d.link;const a=document.getElementById("vvGo");if(a)a.href=d.link}}catch(e){}},250)}
+async function vvOpen(e){const st=UI.vv;const prods=vvProds(st);if(!prods.length){e.preventDefault();return}
+  if(st.link&&st.linkKey===JSON.stringify(prods)){setTimeout(()=>{UI.sheet=null;render()},600);return}
+  e.preventDefault();st.busy=true;UI.lastSh=null;render();
+  try{const d=await vvCall("vkusvill_cart_link_create",{products:prods});st.busy=false;UI.sheet=null;render();location.href=d.link}
+  catch(err){st.busy=false;st.err="Нет соединения с ВкусВиллом.";UI.lastSh=null;render()}}
 const listItems=()=>shoppingList().filter(i=>!atHome(i)&&!isRemoved(i));
 function buyText(i){
   if(i.f==="none")return "";
@@ -1407,7 +1412,7 @@ function vSheet(){
     return `<h3>Поделиться списком</h3><p class="need">${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}</p>
      <div class="sgroup sharel"><button data-a="shareShop"><span>Отправить</span><span>в мессенджер, заметки…</span></button>
      <button data-a="copyLavka"><span>Для Яндекс Лавки</span><span>скопировать для поиска товаров</span></button>
-     <button data-a="vvStart"><span>Корзина во ВкусВилле</span><span>подобрать товары и открыть корзину</span></button></div>`;
+     <button data-a="vvStart"><span>Корзина во ВкусВилл</span><span>подобрать товары и открыть корзину</span></button></div>`;
   }
   if(s.t==="ing"){const r=rById(s.rid),i=r?.ingredients[s.ix];if(!i)return"";const d=UI.ingDraft||{};const g=ingGrams(i,1);
     return `<h3>${esc(i.name)}</h3><p class="need">${esc(fmtIng(i,1))} в рецепте${g&&d.kcal?` · ≈ ${trim(d.kcal*g/100,0)} ккал`:""}</p>
@@ -1457,7 +1462,7 @@ function vSheet(){
        ${p?`<span class="stepper"><button data-a="vvQ" data-i="${ix}" data-d="-1" aria-label="Меньше">−</button><span class="v" style="min-width:3.2em">${p.unit==="кг"?trim(r.q,1)+" кг":r.q+" шт"}</span><button data-a="vvQ" data-i="${ix}" data-d="1" aria-label="Больше">+</button></span>`:""}</div>`}).join("")}</div>
      ${st.err?`<p class="status err">${esc(st.err)}</p>`:""}
      <p class="muted small" style="margin:8px 0 0">Наличие и итоговую цену покажет ВкусВилл в корзине.</p>
-     <div class="cta"><button class="btn" data-a="closeSheet">Отмена</button><button class="btn primary" data-a="vvOpen"${on.length&&!st.busy?"":" disabled"}>${st.busy?"Открываю…":"Открыть корзину"}</button></div>`;
+     <div class="cta"><button class="btn" data-a="closeSheet">Отмена</button><a class="btn primary" id="vvGo" data-a="vvOpen" target="_blank" rel="noopener" href="${esc(st.link||VV_HOME)}"${on.length&&!st.busy?"":' aria-disabled="true" style="opacity:.5;pointer-events:none"'}>${st.busy?"Открываю…":"Открыть корзину"}</a></div>`;
   }
   if(s.t==="dish"){
     const x=findEntry(S.plan.week,s.id);if(!x)return"";const r=rById(x.e.rid);if(!r)return"";
@@ -2043,8 +2048,8 @@ document.body.addEventListener("click",e=>{
     case "loadSel":materialize();if(b.dataset.v)S.plan.load=b.dataset.v;else delete S.plan.load;savePlan();render();break;
     case "sexSel":materialize();S.plan.sex=b.dataset.v||undefined;if(!S.plan.sex)delete S.plan.sex;savePlan();render();break;
     case "vvStart":vvBuild();break;
-    case "vvOpen":vvOpen();break;
-    case "vvQ":{const r=UI.vv?.rows[+b.dataset.i];if(!r)return;const kg=r.opts[r.sel]?.unit==="кг";const st=kg?0.1:1;r.q=Math.max(st,Math.round((r.q+st*+b.dataset.d)*10)/10);UI.lastSh=null;render();break}
+    case "vvOpen":vvOpen(e);break;
+    case "vvQ":{const r=UI.vv?.rows[+b.dataset.i];if(!r)return;const kg=r.opts[r.sel]?.unit==="кг";const st=kg?0.1:1;r.q=Math.max(st,Math.round((r.q+st*+b.dataset.d)*10)/10);vvPrep();UI.lastSh=null;render();break}
     case "dishMenu":UI.sheet={t:"dish",id:b.dataset.id};render();break;
     case "pickDish":UI.sheet={t:"pick",k:b.dataset.k};UI.pickQ="";UI.pickCat="";render();break;
     case "pickAdd":{const r=rById(b.dataset.id);const k=UI.sheet?.k;if(!r||!k)return;const sv=S.plan.people;
@@ -2094,8 +2099,8 @@ document.body.addEventListener("change",e=>{
   if(t.id==="normIn"){const v=Math.round(+t.value);materialize();if(v>0)S.plan.norm=v;else delete S.plan.norm;savePlan();render();return}
   if(t.id==="restoreFile"&&t.files.length){backupRestore(t.files[0]);t.value="";return}
   if(t.dataset.pd==="unit"&&UI.prodDraft){UI.prodDraft.unit=t.value;UI.lastSh=null;render();return}
-  if(t.dataset.vvon!=null&&UI.vv){UI.vv.rows[+t.dataset.vvon].on=t.checked;UI.lastSh=null;render();return}
-  if(t.dataset.vvsel!=null&&UI.vv){const r=UI.vv.rows[+t.dataset.vvsel];r.sel=+t.value;r.q=vvQty(r.item,r.opts[r.sel]);UI.lastSh=null;render();return}
+  if(t.dataset.vvon!=null&&UI.vv){UI.vv.rows[+t.dataset.vvon].on=t.checked;vvPrep();UI.lastSh=null;render();return}
+  if(t.dataset.vvsel!=null&&UI.vv){const r=UI.vv.rows[+t.dataset.vvsel];r.sel=+t.value;r.q=vvQty(r.item,r.opts[r.sel]);vvPrep();UI.lastSh=null;render();return}
   if(t.id==="scanPhoto"&&t.files.length){scanPhoto(t.files[0]);return}
   if(t.dataset.ik&&UI.ingDraft){UI.ingDraft[t.dataset.ik]=t.value===""?"":+t.value;delete UI.ingDraft.src}
   if(t.id==="impPhoto"&&t.files.length){UI.impText=document.getElementById("impText").value;addPhotos([...t.files]);return}
