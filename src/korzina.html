@@ -47,7 +47,9 @@ body{min-height:100vh;min-height:100lvh}
 .topbar .t{text-align:center;font-weight:600;font-size:17px;opacity:0;transition:opacity .2s}
 .topbar.on .t{opacity:1}
 .gear{grid-column:3;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0}
-.gear svg{width:20px;height:20px}
+.gear{position:relative;isolation:isolate;background:none;border:0}
+.gear::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:50%;background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-hi),0 10px 30px var(--shadow)}
+.gear svg{width:20px;height:20px;position:relative;shape-rendering:geometricPrecision}
 .gear[aria-pressed="true"]{color:var(--accent)}
 
 h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin:0 0 2px;line-height:1.1}
@@ -469,7 +471,7 @@ button.add-dish{text-align:left;cursor:pointer}
 <div class="backdrop" aria-hidden="true"><i></i><i></i><i></i></div>
 <main class="wrap" id="main">
   <div class="topbar glass" id="topbar"><span></span><span class="t" id="barTitle"></span>
-    <button class="gear glass" id="setBtn" aria-label="Настройки" title="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <button class="gear" id="setBtn" aria-label="Настройки" title="Настройки"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
   </div>
   <div id="app"><div class="boot" aria-label="Загрузка"><i></i></div></div>
 </main>
