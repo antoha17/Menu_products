@@ -1532,12 +1532,11 @@ const PRESETS={
   anthropic:{label:"Anthropic",url:"https://api.anthropic.com/v1",fmt:"anthropic",model:"claude-haiku-5-5"},
   deepseek:{label:"DeepSeek",url:"https://api.deepseek.com/v1"},
   gemini:{label:"Gemini",url:"https://generativelanguage.googleapis.com/v1beta/openai"},
-  openrouter:{label:"OpenRouter",url:"https://openrouter.ai/api/v1"},
 };
 function aiCfg(){let c=null;try{c=JSON.parse(localStorage.getItem("kz-ai")||"null")}catch(e){}const inClaude=!!window.claude;const r0=c&&!PRESETS[c.preset]?null:c;c=r0;return Object.assign(inClaude?{preset:"auto",url:"",key:"",model:""}:{preset:"openai",url:PRESETS.openai.url,key:"",model:""},c||{})}
 function parseJSON(t){t=String(t||"").replace(/```(?:json)?/g,"");const a=t.indexOf("{"),b=t.lastIndexOf("}");try{return JSON.parse(t.slice(a,b+1))}catch(e){throw{code:"invalid_json"}}}
-/* web search is built into OpenAI (Responses API), Anthropic (web_search tool) and OpenRouter (":online" models) */
-const webOK=c=>["openai","anthropic","openrouter"].includes(c.preset);
+/* web search is built into OpenAI (Responses API), and Anthropic (web_search tool) */
+const webOK=c=>["openai","anthropic"].includes(c.preset);
 async function callAI(prompt,signal,c=aiCfg(),images=[],web=false){
   if(c.preset==="auto"){const sample=await window.claude?.use("sample");if(!sample)throw{code:"no_ai"};return sample.json(prompt,images.length?{signal,images:images.map(x=>x.blob)}:{signal})}
   if(!c.url||!c.key||!c.model)throw{code:"no_cfg"};
@@ -1555,7 +1554,7 @@ async function callAI(prompt,signal,c=aiCfg(),images=[],web=false){
       text=j.output_text||(j.output||[]).filter(x=>x.type==="message").flatMap(x=>x.content||[]).filter(x=>x.type==="output_text").map(x=>x.text).join("");
     }else{
       const r=await fetch(base+"/chat/completions",{method:"POST",signal,headers:{"content-type":"application/json","authorization":"Bearer "+c.key.trim()},
-        body:JSON.stringify({model:c.model.trim()+(web&&c.preset==="openrouter"&&!/:online$/.test(c.model.trim())?":online":""),messages:[{role:"user",content:images.length?[{type:"text",text:prompt},...images.map(x=>({type:"image_url",image_url:{url:x.dataUrl}}))]:prompt}]})});
+        body:JSON.stringify({model:c.model.trim(),messages:[{role:"user",content:images.length?[{type:"text",text:prompt},...images.map(x=>({type:"image_url",image_url:{url:x.dataUrl}}))]:prompt}]})});
       const j=await r.json().catch(()=>({}));if(!r.ok)throw{code:"http",message:j.error?.message||("ошибка "+r.status)};
       text=j.choices?.[0]?.message?.content||"";
     }
