@@ -941,9 +941,18 @@ async function vvCall(name,args,signal){const r=await fetch(VV,{method:"POST",si
 const vvName=s=>String(s||"").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
 /* grams (or ml) the list needs, when it can be known */
 function vvNeedG(i){if(i.f==="mass"||i.f==="vol")return i.v;if(i.f==="шт"){const g=gppOf({name:i.name});return g?i.v*g:null}return null}
-function vvQty(i,p){const w=p.weight?.value?(p.weight.unit==="кг"?p.weight.value*1000:+p.weight.value):null;const g=vvNeedG(i);
+function vvQty(i,p){if(p.weight?.unit==="шт"&&+p.weight.value>0&&i.f==="шт")return Math.max(1,Math.ceil(i.v/p.weight.value-0.05));
+  const w=p.weight?.value?(p.weight.unit==="кг"?p.weight.value*1000:p.weight.unit==="шт"?null:+p.weight.value):null;const g=vvNeedG(i);
   if(p.unit==="кг"){return Math.max(0.1,Math.round((g?g/1000:0.5)*10)/10)}
   if(g&&w)return Math.max(1,Math.ceil(g/w-0.05));return 1}
+/* two list lines that found the same VkusVill product become one row: the amount is the total need, not one pack per line */
+function vvMerge(rows){const by=new Map(),res=[];
+  for(const r of rows){const id=r.opts[0]?.id;const m=id!=null&&by.get(id);if(!m){if(id!=null)by.set(id,r);res.push(r);continue}
+    const a=m.item,b=r.item;let it=null;
+    if(a.f===b.f&&a.f!=="по вкусу")it={...a,v:a.v+b.v};else{const ga=vvNeedG(a),gb=vvNeedG(b);if(ga!=null&&gb!=null)it={...a,f:"mass",v:ga+gb}}
+    m.name=m.name+" + "+r.name;
+    if(it){m.item=it;m.need=fmt(it.v,it.f);m.q=vvQty(it,m.opts[m.sel])}else if(m.need!==r.need)m.need=m.need+" + "+r.need}
+  return res}
 async function vvBuild(){const items=listItems().filter(i=>!S.plan.checks[i.key]);const st={loading:true,rows:[],err:""};UI.vv=st;UI.sheet={t:"vv"};render();
   const ctl=new AbortController();UI.vvCtl=ctl;const tm=setTimeout(()=>ctl.abort(),25000);
   try{const out=new Array(items.length);let k=0;
@@ -952,7 +961,7 @@ async function vvBuild(){const items=listItems().filter(i=>!S.plan.checks[i.key]
         const opts=(d.items||[]).map(p=>({id:p.id,name:vvName(p.name),price:+p.price?.current||0,unit:p.unit,weight:p.weight}));
         out[n]={key:i.key,name:i.name,need:i.f==="по вкусу"?"по вкусу":fmt(i.v,i.f),opts,sel:0,q:opts[0]?vvQty(i,opts[0]):1,on:!!opts.length,item:i}}
       catch(e){if(e.name==="AbortError")throw e;out[n]={key:i.key,name:i.name,need:fmt(i.v,i.f),opts:[],sel:0,q:1,on:false,item:i}}}}));
-    st.rows=out}catch(e){st.err="Нет соединения с ВкусВиллом."}
+    st.rows=vvMerge(out)}catch(e){st.err="Нет соединения с ВкусВиллом."}
   finally{clearTimeout(tm);st.loading=false;if(UI.sheet?.t==="vv"){UI.lastSh=null;render();vvPrep()}}}
 const vvProds=st=>st.rows.filter(r=>r.on&&r.opts[r.sel]).map(r=>({id:r.opts[r.sel].id,q:r.q}));
 function vvPrep(){const st=UI.vv;if(!st||st.loading)return;const prods=vvProds(st),key=JSON.stringify(prods);if(st.linkKey===key)return;
