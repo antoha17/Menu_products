@@ -1980,13 +1980,16 @@ document.body.addEventListener("click",e=>{
     case "openRecipe":{const id=b.dataset.id,q=()=>document.querySelector(`.ritem[data-id="${CSS.escape(id)}"]`);
       /* the tapped row does not jump when another recipe above it collapses */
       const y0=q()?.getBoundingClientRect().top;
-      if(UI.sel===id&&!UI.editor)UI.sel=null;else{UI.sel=id;UI.scale=null;UI.addServ=null;UI.slots=[];UI.editor=null}
+      const closing=UI.sel===id&&!UI.editor;if(!UI.sel)UI.recY=scrollY;
+      if(closing)UI.sel=null;else{UI.sel=id;UI.scale=null;UI.addServ=null;UI.slots=[];UI.editor=null}
       render();const el=q();if(el&&y0!=null)scrollBy(0,el.getBoundingClientRect().top-y0);
+      /* collapsing glides the list back to where it was before the recipe opened */
+      if(closing&&UI.recY!=null){scrollTo({top:UI.recY,behavior:"smooth"});UI.recY=null}
       /* an opened recipe glides up so its title sits right under the top bar */
       if(el&&UI.sel===id){const tb=document.getElementById("topbar");const under=(parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8;
         scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-under),behavior:"smooth"})}
       break}
-    case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
+    case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(UI.recY!=null){scrollTo({top:UI.recY,behavior:"smooth"});UI.recY=null}else if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
     case "recCat":{/* the section buttons stay where they were; only the list below changes */
       const ch=()=>document.querySelector(".recipes .chips")||document.getElementById("recQ");const y0=ch()?.getBoundingClientRect().top;
       UI.recCat=b.dataset.v;render();const el=ch();if(el&&y0!=null)scrollBy(0,el.getBoundingClientRect().top-y0);fixViewport();break}

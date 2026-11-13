@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=f21bab18">
+<link rel="manifest" href="manifest.webmanifest?v=62275829">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1992,13 +1992,16 @@ document.body.addEventListener("click",e=>{
     case "openRecipe":{const id=b.dataset.id,q=()=>document.querySelector(`.ritem[data-id="${CSS.escape(id)}"]`);
       /* the tapped row does not jump when another recipe above it collapses */
       const y0=q()?.getBoundingClientRect().top;
-      if(UI.sel===id&&!UI.editor)UI.sel=null;else{UI.sel=id;UI.scale=null;UI.addServ=null;UI.slots=[];UI.editor=null}
+      const closing=UI.sel===id&&!UI.editor;if(!UI.sel)UI.recY=scrollY;
+      if(closing)UI.sel=null;else{UI.sel=id;UI.scale=null;UI.addServ=null;UI.slots=[];UI.editor=null}
       render();const el=q();if(el&&y0!=null)scrollBy(0,el.getBoundingClientRect().top-y0);
+      /* collapsing glides the list back to where it was before the recipe opened */
+      if(closing&&UI.recY!=null){scrollTo({top:UI.recY,behavior:"smooth"});UI.recY=null}
       /* an opened recipe glides up so its title sits right under the top bar */
       if(el&&UI.sel===id){const tb=document.getElementById("topbar");const under=(parseFloat(getComputedStyle(tb).top)||0)+tb.offsetHeight+8;
         scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-under),behavior:"smooth"})}
       break}
-    case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
+    case "closeRecipe":{const id=UI.sel;UI.sel=null;render();const el=document.querySelector(`.ritem[data-id="${CSS.escape(id||"")}"]`);if(UI.recY!=null){scrollTo({top:UI.recY,behavior:"smooth"});UI.recY=null}else if(el)scrollTo({top:el.getBoundingClientRect().top+scrollY-120});break}
     case "recCat":{/* the section buttons stay where they were; only the list below changes */
       const ch=()=>document.querySelector(".recipes .chips")||document.getElementById("recQ");const y0=ch()?.getBoundingClientRect().top;
       UI.recCat=b.dataset.v;render();const el=ch();if(el&&y0!=null)scrollBy(0,el.getBoundingClientRect().top-y0);fixViewport();break}
