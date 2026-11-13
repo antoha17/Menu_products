@@ -1430,7 +1430,8 @@ function vSheet(){
   if(s.t==="order"){const n=lavkaText().split("\n").filter(Boolean).length;
     return `<h3>Где заказать</h3><p class="need">${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}</p>
      <div class="shops"><button class="shop" data-a="vvStart"><span class="slogo vv">${SHOP_ICON.vv}</span><b>ВкусВилл</b><small>соберу корзину</small></button>
-     <a class="shop" data-a="lavkaGo" href="https://lavka.yandex.ru/search?text=${encodeURIComponent(lavkaText().split("\n").filter(Boolean).join("; "))}" target="_blank" rel="noopener"><span class="slogo lv">${SHOP_ICON.lv}</span><b>Яндекс Лавка</b><small>поиск со списком</small></a></div>`;
+     <a class="shop" data-a="lavkaGo" href="https://lavka.yandex.ru/search?text=${encodeURIComponent(lavkaText().split("\n").filter(Boolean).join("; "))}" target="_blank" rel="noopener"><span class="slogo lv">${SHOP_ICON.lv}</span><b>Яндекс Лавка</b><small>поиск со списком</small></a></div>
+     <p class="muted small" style="margin:4px 2px 0">Для Лавки список ещё и копируется. Если откроется приложение Лавки, нажмите на поиск → «Вставить» и включите ai.</p>`;
   }
   if(s.t==="ing"){const r=rById(s.rid),i=r?.ingredients[s.ix];if(!i)return"";const d=UI.ingDraft||{};const g=ingGrams(i,1);
     return `<h3>${esc(i.name)}</h3><p class="need">${esc(fmtIng(i,1))} в рецепте${g&&d.kcal?` · ≈ ${trim(d.kcal*g/100,0)} ккал`:""}</p>
@@ -1912,7 +1913,7 @@ function undoable(label){
 /* plain list for pasting into Yandex Lavka's cart search: one product per line, name + amount, nothing else */
 function lavkaText(){
   return listItems().filter(i=>!S.plan.checks[i.key]).map(i=>{
-    if(i.f==="none"||i.f==="по вкусу")return i.name;
+    if(i.f==="none"||i.f==="по вкусу")return /^соль$/i.test(i.name.trim())?"Соль поваренная":i.name;
     if(i.pack&&["шт","зубч."].includes(i.f))return i.name+" "+i.n+" "+(i.pack.name==="упаковка"?"уп.":i.pack.name);
     if(i.pack)return i.name+" "+fmt(i.size,i.f)+(i.n>1?", "+i.n+" шт":"");
     return i.name+" "+fmt(i.v,i.f)}).join("\n");
@@ -2086,7 +2087,7 @@ document.body.addEventListener("click",e=>{
     case "packCancel":UI.packEdit=null;render();break;
     case "packSave":{const size=+document.getElementById("pk-size").value;if(!(size>0))return;materialize();delete S.plan.packs[b.dataset.g];learn(b.dataset.nm,{pack:{size,unit:b.dataset.u,name:b.dataset.n}});UI.packEdit=null;UI.sheet=null;savePlan();render();break}
     case "packNone":materialize();S.plan.packs[b.dataset.g]={none:true};UI.packEdit=null;savePlan();render();break;
-    case "lavkaGo":{const t=lavkaText();try{navigator.clipboard.writeText(t)}catch(err){}setTimeout(()=>{UI.sheet=null;render()},600);break}
+    case "lavkaGo":{const t=lavkaText();try{navigator.clipboard.writeText(t).catch(()=>{})}catch(err){}setTimeout(()=>{UI.sheet=null;render()},600);break}
     case "orderMenu":UI.sheet={t:"order"};render();break;
     case "shareShop":UI.sheet=null;render();share(shopText(),"Список покупок","copiedS");break;
     case "resetChecks":S.plan.checks={};savePlan();render();break;
