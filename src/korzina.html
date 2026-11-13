@@ -61,6 +61,13 @@ h3{font-size:17px;margin:0;font-weight:600}
 .lede{color:var(--muted);margin:4px 0 0;max-width:62ch;font-size:15px}
 .sechead{margin:-4px 0 16px}
 .actions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.ordrow{margin:12px 0 0;gap:10px;align-items:center}
+.ordbtn{flex:1 1 0;min-width:0;height:50px;font-size:17px}
+.icbtn{flex:0 0 44px;width:44px;height:44px;padding:0;border-radius:50%}
+.icbtn .shi{width:20px;height:20px;margin:0}
+.ordrow .unmark{flex-basis:100%;justify-content:flex-start;padding-left:4px}
+.ordrow .copied{flex-basis:100%}
+.ordrow .copied:empty{display:none}
 .muted{color:var(--muted)}
 .small{font-size:13px}
 .num{font-variant-numeric:tabular-nums}
@@ -1380,7 +1387,7 @@ function vShop(){
   <div class="card">${buy.length&&done===buy.length?`<div class="prog alldone"><b>Всё куплено ✓</b><button class="btn sm" data-a="resetChecks">Снять отметки</button></div>`
    :`<div class="prog"><div class="prog-t"><b>Осталось купить ${buy.length-done}</b><span>из ${buy.length}</span></div><div class="bar" role="progressbar" aria-label="Куплено" aria-valuemin="0" aria-valuemax="${buy.length}" aria-valuenow="${done}"><i style="width:${buy.length?Math.round(done/buy.length*100):0}%"></i></div></div>`}
    <p class="homeline">Если продукт уже есть дома, смахните его влево</p>${home.length?`<button class="homecount" data-a="toHomeList"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Есть дома: ${home.length} ${home.length%10===1&&home.length%100!==11?"продукт":[2,3,4].includes(home.length%10)&&![12,13,14].includes(home.length%100)?"продукта":"продуктов"}<span>показать ↓</span></button>`:""}</div>
-  <div class="actions" style="margin:12px 0 0"><button class="btn sm primary" data-a="orderMenu">Заказать</button><button class="btn sm iconb2" data-a="shareShop" aria-label="Поделиться списком" title="Поделиться списком"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg></button><button class="btn sm danger" data-a="clearList">Очистить список</button>${done&&done<buy.length?`<button class="btn sm ghost" data-a="resetChecks">Снять отметки</button>`:""}<span class="copied" id="copiedS"></span></div>
+  <div class="actions ordrow"><button class="btn primary ordbtn" data-a="orderMenu">Заказать</button><button class="btn icbtn" data-a="shareShop" aria-label="Поделиться списком" title="Поделиться списком"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5"/><path d="M5 12v6.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V12"/></svg></button><button class="btn icbtn" data-a="clearList" aria-label="Очистить список" title="Очистить список"><svg class="shi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/><path d="M9 7V4h6v3"/></svg></button>${done&&done<buy.length?`<button class="btn sm ghost unmark" data-a="resetChecks">Снять отметки</button>`:""}<span class="copied" id="copiedS"></span></div>
   ${CATS.filter(c=>byCat(c).length).map(c=>`<div class="gtitle">${c}</div><div class="group">${byCat(c).map(item).join("")}</div>`).join("")}
   ${homeCard(home)}
   ${extraCard()}`;
