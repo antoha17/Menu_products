@@ -278,7 +278,8 @@ button.qty{cursor:pointer}
 .vvc input{width:22px;height:22px;margin:0}
 .vvm{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .vvn{font-weight:600;font-size:15px}
-.vvn small{font-weight:400;color:var(--muted);white-space:nowrap}
+.vvn small{display:block;font-size:13px;font-weight:500;color:var(--accent);margin-top:1px;font-variant-numeric:tabular-nums}
+.vvr.off .vvn small{color:var(--muted)}
 .vvm select{width:100%;font-size:14px!important;padding:7px 30px 7px 10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vvp{font-size:12px;color:var(--muted)}
 .homecount{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;padding:10px 12px;border:0;border-radius:12px;background:var(--accent-soft);color:var(--accent);font:inherit;font-weight:700;font-size:15px;cursor:pointer;text-align:left}
@@ -1450,7 +1451,7 @@ function vSheet(){
     return `<h3>Корзина ВкусВилл</h3><p class="need">${on.length} ${on.length%10===1&&on.length%100!==11?"товар":[2,3,4].includes(on.length%10)&&![12,13,14].includes(on.length%100)?"товара":"товаров"} · ≈ ${trim(Math.round(sum),0)} ₽</p>
      <div class="vvlist">${st.rows.map((r,ix)=>{const p=r.opts[r.sel];return `<div class="vvr${r.on?"":" off"}">
        <label class="vvc"><input type="checkbox" data-vvon="${ix}"${r.on?" checked":""}${p?"":" disabled"}></label>
-       <div class="vvm"><div class="vvn">${esc(r.name)} <small>· нужно ${esc(r.need)}</small></div>
+       <div class="vvm"><div class="vvn">${esc(r.name)}<small>${r.need==="по вкусу"?"по вкусу":"нужно "+esc(r.need)}</small></div>
         ${p?`<select data-vvsel="${ix}" aria-label="Товар ВкусВилла">${r.opts.map((o,k)=>`<option value="${k}"${k===r.sel?" selected":""}>${esc(o.name)}</option>`).join("")}</select><small class="vvp">${trim(p.price,0)} ₽${p.unit==="кг"?" за кг":" за шт"} · ${trim(Math.round(p.price*r.q),0)} ₽</small>`:`<span class="muted small">не нашлось во ВкусВилле</span>`}</div>
        ${p?`<span class="stepper"><button data-a="vvQ" data-i="${ix}" data-d="-1" aria-label="Меньше">−</button><span class="v" style="min-width:3.2em">${p.unit==="кг"?trim(r.q,1)+" кг":r.q+" шт"}</span><button data-a="vvQ" data-i="${ix}" data-d="1" aria-label="Больше">+</button></span>`:""}</div>`}).join("")}</div>
      ${st.err?`<p class="status err">${esc(st.err)}</p>`:""}
