@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=f4b11d2c">
+<link rel="manifest" href="manifest.webmanifest?v=f21bab18">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -268,6 +268,10 @@ button.qty{cursor:pointer}
 .item[data-key]{touch-action:pan-y;transition:transform .18s;background:var(--surface)}
 .item[data-key]::after{content:"Есть дома";position:absolute;top:0;bottom:0;left:100%;width:170px;display:flex;align-items:center;padding-left:18px;background:var(--fill);color:var(--muted);font-weight:600}
 .item.armed::after{background:var(--accent-fill);color:var(--accent-ink)}
+.ritem[data-a=openRecipe]{touch-action:pan-y;transition:transform .18s;background:var(--surface)}
+.ritem[data-a=openRecipe][aria-current="true"]{background:var(--fill)}
+.ritem[data-a=openRecipe]::after{content:"Удалить";position:absolute;top:0;bottom:0;left:100%;width:170px;display:flex;align-items:center;padding-left:18px;background:var(--beet);color:#fff;font-weight:600;opacity:.55}
+.ritem.armed::after{opacity:1}
 .item.home .nm{color:var(--muted)}
 .homeline{margin:10px 0 0;font-size:13px;color:var(--muted)}
 .bkb{background:var(--accent-soft)}
@@ -1924,6 +1928,9 @@ function underBar(el,smooth){if(!el)return;const tb=document.getElementById("top
   scrollTo({top:Math.max(0,el.getBoundingClientRect().top+scrollY-under),behavior:smooth?"smooth":"auto"})}
 function showDetail(){requestAnimationFrame(()=>underBar(document.querySelector(".addcard")||document.querySelector(".recipes>.card")))}
 /* bulk deletions happen at once; a short "Вернуть" toast covers a mis-tap */
+function delRecipes(ids){const W=S.plan.week;materialize();undoable(ids.length===1?"Рецепт удалён":"Удалено рецептов: "+ids.length);
+  S.recipes=S.recipes.filter(r=>!ids.includes(r.id));entries(W).filter(x=>ids.includes(x.e.rid)).forEach(x=>rmEntry(W,x.e.id));ids.forEach(deleteRecipeStore);
+  if(ids.includes(UI.sel))UI.sel=null;savePlan();render()}
 function undoable(label){
   UI.undo={label,left:5,snap:clean({recipes:S.recipes,plan:S.plan})};clearInterval(UI.undoT);
   UI.undoT=setInterval(()=>{if(!UI.undo){clearInterval(UI.undoT);return}
@@ -2014,7 +2021,7 @@ document.body.addEventListener("click",e=>{
     case "shareRecipe":share(recipeText(rById(UI.sel)),rById(UI.sel).name,"copiedR");break;
     case "addServ":{const r=rById(UI.sel);UI.addServ=Math.max(1,(UI.addServ||S.plan.people)+ +b.dataset.d);}render();break;
     case "edit":{const r=rById(b.dataset.id);if(isProd(r)){UI.prodDraft=prodDraftOf(r);UI.sheet={t:"prod"};render();break}openEditor(r,false);break}
-    case "delRecipe":{materialize();const id=b.dataset.id;S.recipes=S.recipes.filter(r=>r.id!==id);entries(W).filter(x=>x.e.rid===id).forEach(x=>rmEntry(W,x.e.id));deleteRecipeStore(id);savePlan();UI.sel=null;render()}break;
+    case "delRecipe":delRecipes([b.dataset.id]);break;
     case "parseAI":parseAI();break;
     case "parseText":parseText();break;
     case "parsePhotos":parsePhotos();break;
@@ -2097,9 +2104,7 @@ document.body.addEventListener("click",e=>{
     case "pickStart":UI.pick=[];UI.sel=null;UI.editor=null;render();break;
     case "pickDone":UI.pick=null;render();break;
     case "pickToggleAll":UI.pick=UI.pick.length===S.recipes.length?[]:S.recipes.map(r=>r.id);render();break;
-    case "pickDel":{const ids=UI.pick;if(!ids.length)return;materialize();undoable(ids.length===1?"Рецепт удалён":"Удалено рецептов: "+ids.length);
-      S.recipes=S.recipes.filter(r=>!ids.includes(r.id));entries(W).filter(x=>ids.includes(x.e.rid)).forEach(x=>rmEntry(W,x.e.id));ids.forEach(deleteRecipeStore);
-      UI.pick=null;savePlan();render();break}
+    case "pickDel":{const ids=UI.pick;if(!ids.length)return;UI.pick=null;delRecipes(ids);break}
     case "itemSheet":UI.sheet={t:"item",key:b.dataset.key};render();break;
     case "closeSheet":UI.sheet=null;render();break;
     case "pal":setPal({id:b.dataset.v});render();break;
@@ -2158,12 +2163,12 @@ document.body.addEventListener("change",e=>{
    if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.8){UI.day=Math.max(0,Math.min(6,(UI.day??0)+(dx<0?1:-1)));render()}})}
 /* swipe a shopping row to the left: "have it at home" */
 let swp=null;
-document.addEventListener("touchstart",e=>{const it=e.target.closest(".item[data-key]");swp=it?{it,x:e.touches[0].clientX,y:e.touches[0].clientY,dx:0,on:false}:null},{passive:true});
+document.addEventListener("touchstart",e=>{const it=e.target.closest(".item[data-key],.ritem[data-a=openRecipe]");swp=it?{it,x:e.touches[0].clientX,y:e.touches[0].clientY,dx:0,on:false}:null},{passive:true});
 document.addEventListener("touchmove",e=>{if(!swp)return;const t=e.touches[0],dx=t.clientX-swp.x,dy=t.clientY-swp.y;
   if(!swp.on){if(Math.abs(dx)>12&&Math.abs(dx)>Math.abs(dy)*1.5)swp.on=true;else{if(Math.abs(dy)>12)swp=null;return}}
   swp.dx=Math.min(0,dx);swp.it.style.transition="none";swp.it.style.transform=`translateX(${Math.max(swp.dx,-170)}px)`;swp.it.classList.toggle("armed",swp.dx<-90)},{passive:true});
 document.addEventListener("touchend",()=>{if(!swp)return;const {it,dx,on}=swp;swp=null;if(!on)return;it.style.transition="";
-  if(dx<-90){it.style.transform="translateX(-100%)";setTimeout(()=>setHome(it.dataset.key,true),160)}else{it.style.transform="";it.classList.remove("armed")}});
+  if(dx<-90){it.style.transform="translateX(-100%)";it.dataset.swiped="1";setTimeout(()=>it.dataset.key?setHome(it.dataset.key,true):delRecipes([it.dataset.id]),160)}else{it.style.transform="";it.classList.remove("armed")}});
 /* iOS web apps sometimes leave fixed bars (tab bar, background) lifted by the keyboard's height after it closes;
    a 1px scroll nudge makes Safari recompute the viewport */
 function fixViewport(){setTimeout(()=>{const y=scrollY;scrollTo(scrollX,y+1);scrollTo(scrollX,y)},60)}
