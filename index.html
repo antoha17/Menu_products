@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=1eb5709e">
+<link rel="manifest" href="manifest.webmanifest?v=bc75d904">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -64,6 +64,9 @@ body{min-height:100vh;min-height:100lvh}
 .gear{position:relative;isolation:isolate;background:none;border:0}
 .gear::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:50%;background:var(--surface);border:1px solid var(--glass-edge);box-shadow:0 4px 14px var(--shadow)}
 .gear svg{width:20px;height:20px;position:relative;shape-rendering:geometricPrecision}
+.gear::before{transition:opacity .2s}
+.topbar.on .gear::before{opacity:0}
+.topbar.on .gear svg{width:22px;height:22px}
 .gear[aria-pressed="true"]{color:var(--accent)}
 
 h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin:0 0 2px;line-height:1.1}

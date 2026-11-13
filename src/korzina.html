@@ -52,6 +52,9 @@ body{min-height:100vh;min-height:100lvh}
 .gear{position:relative;isolation:isolate;background:none;border:0}
 .gear::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:50%;background:var(--surface);border:1px solid var(--glass-edge);box-shadow:0 4px 14px var(--shadow)}
 .gear svg{width:20px;height:20px;position:relative;shape-rendering:geometricPrecision}
+.gear::before{transition:opacity .2s}
+.topbar.on .gear::before{opacity:0}
+.topbar.on .gear svg{width:22px;height:22px}
 .gear[aria-pressed="true"]{color:var(--accent)}
 
 h1{font-size:34px;font-weight:700;letter-spacing:-.02em;margin:0 0 2px;line-height:1.1}
