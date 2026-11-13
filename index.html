@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=9fefa3d3">
+<link rel="manifest" href="manifest.webmanifest?v=15338d9d">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1270,7 +1270,7 @@ async function webSearch(more){
   const seen=UI.webSeen||[];UI.webRes=null;
   const res=await ask("web",`Найди в интернете 4 разных рецепта по запросу: «${q}».
 ${seen.length?`Не предлагай эти рецепты, нужны другие варианты: ${seen.join("; ")}.
-`:""}Ищи по всему интернету на русском языке: подойдёт любой сайт, где есть сам рецепт со списком ингредиентов и количествами — кулинарные сайты, журналы о еде, блоги поваров. Не бери страницы, которые не про готовку: магазины и маркетплейсы, новости, форумы, видео без текста рецепта. Старайся, чтобы 4 варианта были с разных сайтов. Бери данные только со страниц, которые ты действительно открыл. Не придумывай рецепты, ингредиенты и ссылки.
+`:""}Ищи по всему интернету на русском языке: подойдёт любой сайт, где есть сам рецепт со списком ингредиентов и количествами — кулинарные сайты, журналы о еде, блоги поваров. Не бери страницы, которые не про готовку: магазины и маркетплейсы, новости, форумы, видео без текста рецепта. Старайся, чтобы 4 варианта были с разных сайтов. Бери данные только со страниц, которые ты действительно открыл. Не придумывай рецепты, ингредиенты и ссылки. Для каждого ингредиента обязательно перепиши со страницы количество (qty и unit); «по вкусу» ставь только там, где на странице так и написано. Рецепт, у которого не удалось узнать количества, не включай.
 Верни ТОЛЬКО JSON без пояснений: {"recipes": [${RECIPE_SCHEMA.slice(0,-1)}, "source": "полная ссылка на страницу рецепта", "site": "домен сайта"}]}
 ${RULES}`,[],true);
   if(!res)return;
@@ -1278,6 +1278,13 @@ ${RULES}`,[],true);
   if(!list.length){setMsg("web","Ничего подходящего не нашлось. Попробуйте сформулировать иначе.",true);return}
   UI.webRes=list;UI.webSeen=[...seen,...list.map(x=>x.name)];render();
 }
+/* a search answer sometimes comes back without amounts; then read that one page again in full */
+const ingsOK=x=>{const a=(x.ingredients||[]);return a.length&&a.filter(i=>+i.qty>0).length>=a.length*0.6};
+async function webTake(ix){let x=UI.webRes?.[ix];if(!x)return;const src=/^https?:\/\//.test(x.source||"")?x.source:"";
+  if(!ingsOK(x)&&src){const d=await ask("web",`Открой страницу ${src} и выпиши с неё рецепт «${x.name}» полностью, с количеством каждого ингредиента так, как написано на странице.
+Верни ТОЛЬКО JSON без пояснений: ${RECIPE_SCHEMA}
+${RULES}`,[],true);if(!d)return;if(ingsOK(d))x=Object.assign({},x,d,{source:x.source})}
+  const r=normRecipe(x,src);r.note=ingsOK(x)?"Рецепт найден в интернете. Сверьте количества с сайтом по ссылке, если сомневаетесь.":"Количества не удалось прочитать с сайта. Откройте ссылку и впишите их.";openEditor(r,true)}
 async function parsePhotos(){
   if(!(UI.photos||[]).length)return;
   if(!aiReady()){setMsg("import","Фото читает только ИИ. Подключите его в ⚙ Настройках или вставьте текст рецепта.",true);return}
@@ -1986,7 +1993,7 @@ document.body.addEventListener("click",e=>{
     case "webSearch":webSearch(false);break;
     case "webMore":webSearch(true);break;
     case "webReset":UI.webRes=null;UI.webQ="";UI.webSeen=[];UI.webLastQ="";UI.msg.web={t:""};render();break;
-    case "webTake":{const x=UI.webRes?.[+b.dataset.i];if(!x)return;const r=normRecipe(x,/^https?:\/\//.test(x.source||"")?x.source:"");r.note="Рецепт найден в интернете. Сверьте количества с сайтом по ссылке, если сомневаетесь.";openEditor(r,true);break}
+    case "webTake":webTake(+b.dataset.i);break;
     case "stopAI":aiCtl?.abort();break;
     case "parseLocal":parseLocal();break;
     case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:1,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
