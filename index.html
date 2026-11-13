@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=9feac9d8">
+<link rel="manifest" href="manifest.webmanifest?v=e7b6a6e7">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1443,7 +1443,7 @@ function vSheet(){
     return `<h3>Где заказать</h3><p class="need">${n} ${n%10===1&&n%100!==11?"товар":[2,3,4].includes(n%10)&&![12,13,14].includes(n%100)?"товара":"товаров"}</p>
      <div class="shops"><button class="shop" data-a="vvStart"><span class="slogo vv">${SHOP_ICON.vv}</span><b>ВкусВилл</b><small>соберу корзину</small></button>
      <a class="shop" data-a="lavkaGo" href="https://lavka.yandex.ru/search?text=${encodeURIComponent(lavkaText().split("\n").filter(Boolean).join("; "))}" target="_blank" rel="noopener"><span class="slogo lv">${SHOP_ICON.lv}</span><b>Яндекс Лавка</b><small>поиск со списком</small></a></div>
-     <p class="muted small" style="margin:4px 2px 0">Для Лавки список ещё и копируется. Если откроется приложение Лавки, нажмите на поиск → «Вставить» и включите ai.</p>`;
+     <p class="muted small" style="margin:4px 2px 0">Лавка откроется на сайте, список уже будет в поиске — включите ai. Если выберете «В приложении», там нажмите на поиск → «Вставить» и включите ai.</p>`;
   }
   if(s.t==="ing"){const r=rById(s.rid),i=r?.ingredients[s.ix];if(!i)return"";const d=UI.ingDraft||{};const g=ingGrams(i,1);
     return `<h3>${esc(i.name)}</h3><p class="need">${esc(fmtIng(i,1))} в рецепте${g&&d.kcal?` · ≈ ${trim(d.kcal*g/100,0)} ккал`:""}</p>
