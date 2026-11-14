@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=d7b45f90">
+<link rel="manifest" href="manifest.webmanifest?v=c89c0c69">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -1472,12 +1472,11 @@ function vSheet(){
   }
   if(s.t==="scan"){const i=s.back==="prod"?{name:UI.prodDraft?.name||"Новый продукт"}:s.rid?rById(s.rid)?.ingredients[s.ix]:UI.editor?.ingredients[s.ix];const st=s.st||"cam";
     return `<h3>Калорийность</h3><p class="need">${esc(i?.name||"")}</p>
-     ${st==="cam"?`<div class="scanbox"><video id="scanV" playsinline muted autoplay></video><div class="scanframe"></div></div><p class="muted small" id="scanSt" style="text-align:center">Наведите камеру на штрихкод</p>`:""}
+     ${st==="cam"?`<div class="scanbox"><video id="scanV" playsinline muted autoplay></video><div class="scanframe"></div></div><p class="muted" id="scanSt" style="text-align:center;margin:14px 0 6px">Наведите камеру на штрихкод</p>`:""}
      ${st==="notfound"?`<p class="hint">${esc(s.why||"Штрихкода нет в базе. Сфотографируйте на упаковке блок с КБЖУ, ИИ распознает цифры. Или введите вручную.")}</p>`:""}
      ${st==="nocam"?`<p class="hint">Камера недоступна. Разрешите доступ к камере для этого приложения или сфотографируйте КБЖУ на упаковке.</p>`:""}
      ${UI.busy==="scan"?`<div class="row" style="margin-top:12px"><span class="muted small" id="scanCd" style="font-variant-numeric:tabular-nums">${esc(UI.msg.scan?.t||"")}</span><button class="btn sm" data-a="stopAI">Остановить</button></div>`
-       :st==="cam"?`<label class="btn ghost wide" for="scanPhoto" style="margin-top:8px">${ICON_CAM}Не читается? Фото КБЖУ</label><input type="file" id="scanPhoto" accept="image/*" capture="environment" hidden>
-     ${msgHtml("scan")}<button class="btn ghost wide" style="margin-top:0" data-a="scanManual">Ввести вручную</button>`
+       :st==="cam"?``
        :`<label class="btn wide" for="scanPhoto" style="margin-top:12px">${ICON_CAM}Сфотографировать КБЖУ</label><input type="file" id="scanPhoto" accept="image/*" capture="environment" hidden>
      ${msgHtml("scan")}<button class="btn ghost wide" style="margin-top:4px" data-a="scanManual">Ввести вручную</button>`}`;
   }
