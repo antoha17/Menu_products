@@ -2034,7 +2034,7 @@ document.body.addEventListener("click",e=>{
     case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:1,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
     case "addRow":UI.editor.ingredients.push({name:"",qty:null,unit:"г",cat:"Другое",pantry:false});render();document.getElementById("ei-n-"+(UI.editor.ingredients.length-1))?.focus();break;
     case "rmRow":UI.editor.ingredients.splice(+b.dataset.i,1);render();break;
-    case "cancelEditor":UI.editor=null;UI.adding=false;render();break;
+    case "cancelEditor":UI.editor=null;UI.adding=false;render();scrollTo({top:0,behavior:"smooth"});break;
     case "saveEditor":{
       const ed=UI.editor;const ings=ed.ingredients.filter(i=>(i.name||"").trim());
       const st=document.getElementById("edStatus");

@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#F3F5F1" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121714" media="(prefers-color-scheme: dark)">
 
-<link rel="manifest" href="manifest.webmanifest?v=c89c0c69">
+<link rel="manifest" href="manifest.webmanifest?v=9deb87c8">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 </head><body>
@@ -2046,7 +2046,7 @@ document.body.addEventListener("click",e=>{
     case "manual":UI.impText=document.getElementById("impText").value;openEditor({manual:true,name:"",servings:1,source:"",ingredients:[{name:"",qty:null,unit:"г",cat:"Другое",pantry:false}]},true);break;
     case "addRow":UI.editor.ingredients.push({name:"",qty:null,unit:"г",cat:"Другое",pantry:false});render();document.getElementById("ei-n-"+(UI.editor.ingredients.length-1))?.focus();break;
     case "rmRow":UI.editor.ingredients.splice(+b.dataset.i,1);render();break;
-    case "cancelEditor":UI.editor=null;UI.adding=false;render();break;
+    case "cancelEditor":UI.editor=null;UI.adding=false;render();scrollTo({top:0,behavior:"smooth"});break;
     case "saveEditor":{
       const ed=UI.editor;const ings=ed.ingredients.filter(i=>(i.name||"").trim());
       const st=document.getElementById("edStatus");
