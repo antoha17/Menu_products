@@ -1,0 +1,48 @@
+/* Mobile preview: visual layer shared by all existing screens. */
+:root{--r:22px;--preview-card:var(--surface)}
+.wrap,.wrap.wide{max-width:560px}
+h1{font-size:30px;letter-spacing:-.035em;line-height:1.15}
+.sechead{margin:0 0 22px}
+.sechead.weekhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.weekhead h1{font-size:clamp(25px,7vw,30px)}
+.weekhead .sub{flex-basis:100%;margin:0}
+.weekhead .clear-menu{min-height:44px;padding:8px 12px;font-size:14px;font-weight:600;color:var(--muted);background:var(--fill);box-shadow:none;flex:none}
+.topbar{padding-top:10px;padding-bottom:4px}
+.dstrip{top:calc(env(safe-area-inset-top,0px) + 58px);padding:6px;margin-bottom:20px;border:1px solid var(--line);border-radius:18px}
+.dsb{min-height:48px;font-size:15px}
+.dsb.on{box-shadow:none;background:var(--accent-fill);color:var(--accent-ink)}
+.dsb.on .dl{color:inherit}.dsb.on .dot.has{background:currentColor}
+.week{display:block}
+.day{padding:0;background:transparent;box-shadow:none;gap:14px}
+.dayname{font-size:23px;letter-spacing:-.025em;padding:0 2px 4px}
+.dayname .tod{display:inline-block;padding:4px 8px;border-radius:20px;background:var(--accent-soft);font-size:11px;letter-spacing:0;vertical-align:middle}
+.meal{padding:16px;background:var(--preview-card);border:1px solid var(--line);border-radius:var(--r);gap:12px;box-shadow:0 2px 4px var(--shadow)}
+.meal-label{margin:0;font-size:12px;letter-spacing:.07em;color:var(--accent)}
+.dish{padding:0;background:none;gap:6px}
+.dish .dn{font-size:16px;line-height:1.35}
+.stepper{gap:0;padding:3px}.stepper .v{min-width:3.5em;font-size:13px}
+.stepper button{width:30px;height:30px}
+.chevb{width:24px}
+.mealrow{padding:0;min-height:44px;font-size:14px}
+.group,.card{background:var(--preview-card);border:1px solid var(--line);box-shadow:0 2px 4px var(--shadow)}
+.item{min-height:60px;padding-top:13px;padding-bottom:13px}
+.ritem{min-height:64px}.gtitle{letter-spacing:.05em;margin-left:4px}
+.btn{min-height:44px}.btn.sm{min-height:40px}
+.tabs{border-radius:24px;width:min(420px,calc(100% - 24px));padding:6px}
+.tab{font-size:12px;min-height:54px;border-radius:18px}.tabpill{border-radius:18px}
+.style-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.style-choice{border:2px solid transparent;border-radius:16px;background:var(--fill);padding:12px;color:var(--ink);font-weight:600;cursor:pointer;min-height:88px}
+.style-choice[aria-checked=true]{border-color:var(--accent);background:var(--accent-soft)}
+.style-sample{height:28px;display:flex;gap:4px;padding:5px;border-radius:7px;margin:0 auto 8px;width:66px;background:#f5f7f5;border:1px solid #b9c8c0}
+.style-sample i{display:block;flex:1;background:#d5e7de;border-radius:3px}.style-sample.glassy{background:linear-gradient(125deg,#c9f4e7,#d6d8f6);box-shadow:0 3px 7px #2222}.style-sample.glassy i{background:#ffffff99}
+.custom-colors{margin-top:12px}.custom-colors summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--muted);font-size:14px}
+.preview-note{font-size:13px;color:var(--muted);margin:6px 0 18px;line-height:1.5}
+:root[data-design=classic] .backdrop{background:var(--bg)}
+:root[data-design=classic] .glass::before,:root[data-design=classic] .dstrip::before{background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none}
+:root[data-design=classic] .glass{box-shadow:0 2px 12px var(--shadow)}
+:root[data-design=classic] .botglass{backdrop-filter:none;-webkit-backdrop-filter:none}
+:root[data-design=glass] .meal,:root[data-design=glass] .group,:root[data-design=glass] .card{background:var(--preview-card);box-shadow:inset 0 1px 0 var(--glass-hi),0 8px 24px var(--shadow)}
+:root[data-design=glass] .backdrop{background:radial-gradient(100% 55% at 0 0,var(--blob1),transparent 75%),radial-gradient(90% 70% at 100% 50%,var(--blob3),transparent 80%),var(--bg)}
+.sheet.glass{background:var(--bg)}
+@media(max-width:360px){.meal{padding:12px}.dish .dn{font-size:15px}.stepper .v{min-width:3em}.weekhead h1{font-size:24px}.dayname{font-size:21px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
